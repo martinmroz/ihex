@@ -9,19 +9,19 @@ impl ToString for Record {
   fn to_string(&self) -> String {
     match self {
       &Record::Data { offset, ref value } =>
-        format_record(types::DATA, offset, value.as_slice()),
+        format_record(self.record_type(), offset, value.as_slice()),
 
       &Record::EndOfFile =>
-        format_record(types::END_OF_FILE, 0x0000, &[]),
+        format_record(self.record_type(), 0x0000, &[]),
 
       &Record::ExtendedSegmentAddress(address) =>
-        format_record(types::EXTENDED_SEGMENT_ADDRESS, 0x0000, &[
+        format_record(self.record_type(), 0x0000, &[
           ((address & 0xFF00) >> 8) as u8,
           ((address & 0x00FF) >> 0) as u8
         ]),
 
       &Record::StartSegmentAddress { cs, ip } =>
-        format_record(types::START_SEGMENT_ADDRESS, 0x0000, &[
+        format_record(self.record_type(), 0x0000, &[
           ((cs & 0xFF00) >> 8) as u8,
           ((cs & 0x00FF) >> 0) as u8,
           ((ip & 0xFF00) >> 8) as u8,
@@ -29,13 +29,13 @@ impl ToString for Record {
         ]),
 
       &Record::ExtendedLinearAddress(address) =>
-        format_record(types::EXTENDED_LINEAR_ADDRESS, 0x0000, &[
+        format_record(self.record_type(), 0x0000, &[
           ((address & 0xFF00) >> 8) as u8,
           ((address & 0x00FF) >> 0) as u8
         ]),
 
       &Record::StartLinearAddress(address) => 
-        format_record(types::START_LINEAR_ADDRESS, 0x0000, &[
+        format_record(self.record_type(), 0x0000, &[
           ((address & 0xFF000000) >> 24) as u8,
           ((address & 0x00FF0000) >> 16) as u8,
           ((address & 0x0000FF00) >>  8) as u8,
