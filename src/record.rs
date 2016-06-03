@@ -1,7 +1,5 @@
 
-use std::fmt;
-
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Record {
 	/// Specifies a 16-bit offset address and up to 255 bytes of data.
 	/// Availability: I8HEX, I16HEX and I32HEX.
@@ -57,19 +55,6 @@ impl Record {
       &Record::StartSegmentAddress { cs: _, ip: _ } => types::START_SEGMENT_ADDRESS,
       &Record::ExtendedLinearAddress(_)             => types::EXTENDED_LINEAR_ADDRESS,
       &Record::StartLinearAddress(_)                => types::START_LINEAR_ADDRESS
-    }
-  }
-}
-
-impl fmt::Debug for Record {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self {
-      &Record::Data { offset, ref value }           => write!(f, "Data (0x{:04X} ({} bytes))", offset, value.len()),
-      &Record::EndOfFile                            => write!(f, "EndOfFile"),
-      &Record::ExtendedSegmentAddress(address)      => write!(f, "ExtendedSegmentAddress (0x{:04X})", address),
-      &Record::StartSegmentAddress { cs, ip }       => write!(f, "StartSegmentAddress (CS:IP {:04X}:{:04X})", cs, ip),
-      &Record::ExtendedLinearAddress(address)       => write!(f, "ExtendedLinearAddress (0x{:04X})", address),
-      &Record::StartLinearAddress(address)          => write!(f, "StartLinearAddress (EIP 0x{:04X})", address),
     }
   }
 }
