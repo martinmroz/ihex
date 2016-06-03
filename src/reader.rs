@@ -56,6 +56,19 @@ const SMALLEST_RECORD_CHAR_COUNT: usize = (5 * 2);
 /// The smallest record (excluding start code) {Smallest} + a 255 byte payload region.
 const LARGEST_RECORD_CHAR_COUNT: usize = SMALLEST_RECORD_CHAR_COUNT + (255 * 2);
 
+pub mod payload_sizes {
+  /// An EoF record has no payload.
+  pub const END_OF_FILE: usize = 0;
+  /// An Extended Segment Address has a 16-bit payload.
+  pub const EXTENDED_SEGMENT_ADDRESS: usize = 2;
+  /// An Start Segment Address has two 16-bit payloads.
+  pub const START_SEGMENT_ADDRESS: usize = 4;
+  /// An Extended Linear Address has a 16-bit payload.
+  pub const EXTENDED_LINEAR_ADDRESS: usize = 2;
+  /// An Start Linear Address has a 32-bit payload.
+  pub const START_LINEAR_ADDRESS: usize = 4;
+}
+
 impl Record {
   /**
    Parses a given IHEX string representation of a Record and 
@@ -125,14 +138,14 @@ impl Record {
       types::END_OF_FILE => {
         // An EoF record has no payload.
         match payload_bytes.len() {
-          0 => Ok(Record::EndOfFile),
+          payload_sizes::END_OF_FILE => Ok(Record::EndOfFile),
           _ => Err(ReaderError::InvalidLengthForType)
         }
       }
 
       types::EXTENDED_SEGMENT_ADDRESS => {
         match payload_bytes.len() {
-          2 => {
+          payload_sizes::EXTENDED_SEGMENT_ADDRESS => {
             // The 16-bit extended segment address is encoded big-endian.
             let address_hi = (payload_bytes[0] as u16) << 8;
             let address_lo = (payload_bytes[1] as u16) << 0;
@@ -147,7 +160,7 @@ impl Record {
 
       types::START_SEGMENT_ADDRESS => {
         match payload_bytes.len() {
-          4 => {
+          payload_sizes::START_SEGMENT_ADDRESS => {
             // The CS:IP pair is encoded as two 16-bit big-endian integers.
             let cs_hi = (payload_bytes[0] as u16) << 8;
             let cs_lo = (payload_bytes[1] as u16) << 0;
@@ -165,7 +178,7 @@ impl Record {
 
       types::EXTENDED_LINEAR_ADDRESS => {
         match payload_bytes.len() {
-          2 => {
+          payload_sizes::EXTENDED_LINEAR_ADDRESS => {
             // The upper 16 bits of the linear address are encoded as a 16-bit big-endian integer.
             let ela_hi = (payload_bytes[0] as u16) << 8;
             let ela_lo = (payload_bytes[1] as u16) << 0;
@@ -180,7 +193,7 @@ impl Record {
 
       types::START_LINEAR_ADDRESS => {
         match payload_bytes.len() {
-          4 => {
+          payload_sizes::START_LINEAR_ADDRESS => {
             // The 32-bit value loaded into EIP is encoded as a 32-bit big-endian integer.
             let sla_4 = (payload_bytes[0] as u32) << 24;
             let sla_3 = (payload_bytes[1] as u32) << 16;
