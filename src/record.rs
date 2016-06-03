@@ -1,7 +1,7 @@
 
 use std::fmt;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum Record {
 	/// Specifies a 16-bit offset address and up to 255 bytes of data.
 	/// Availability: I8HEX, I16HEX and I32HEX.
