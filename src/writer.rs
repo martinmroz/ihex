@@ -88,10 +88,36 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> String {
     })
 }
 
+/**
+ Generates an Intel HEX object file representation of the record set. It is the callers 
+ responsibility to ensure that no overlapping data ranges are defined within the
+ object file. The set of records MUST exactly 1 EOF record as the last record in the list.
+ As with Record::to_string() this function may panic if a data record specifies
+ more than 255 bytes of data.
+ @param records Set of records to include in the object file representation.
+ @return Some(_) if the an object file representation was built successfully, or None.
+ */
+pub fn create_object_file_representation(records: &[Record]) -> Option<String> {
+  if let Some(&Record::EndOfFile) = records.last() {} else {
+    return None;
+  }
+
+  let object_file_representation = 
+    records
+      .iter()
+      .map(|ref record| record.to_string())
+      .collect::<Vec<_>>()
+      .join("\n");
+
+  Some(object_file_representation)
+}
+
 #[cfg(test)]
 mod tests {
 
   use record::Record;
+
+  use super::*;
 
   #[test]
   fn test_record_to_string_for_data_record() {
@@ -156,6 +182,42 @@ mod tests {
 
     let sla_record_2 = Record::StartLinearAddress(0x11223344);
     assert_eq!(sla_record_2.to_string(), String::from(":04000005112233444D"));
+  }
+
+  #[test]
+  fn test_create_object_file_representation_incorrect_termination() {
+    assert_eq!(create_object_file_representation(&[]), None);
+    assert_eq!(create_object_file_representation(&[Record::ExtendedLinearAddress(0)]), None);
+    assert_eq!(create_object_file_representation(&[Record::EndOfFile, Record::ExtendedLinearAddress(0)]), None);
+  }
+
+  #[test]
+  fn test_create_object_file_representation_eof_only() {
+    let records = &[Record::EndOfFile];
+    let expected_result = String::from(":00000001FF");
+    assert_eq!(create_object_file_representation(records).unwrap(), expected_result);
+  }
+
+  #[test]
+  fn test_create_object_file_representation_all_types() {
+    let records = &[
+      Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] },
+      Record::ExtendedSegmentAddress(0x1200),
+      Record::StartSegmentAddress { cs: 0x0000, ip: 0x3800 },
+      Record::ExtendedLinearAddress(0xFFFF),
+      Record::StartLinearAddress(0x000000CD),
+      Record::EndOfFile
+    ];
+
+    let expected_result = String::new() +
+      &":0B0010006164647265737320676170A7\n" +
+      &":020000021200EA\n" +
+      &":0400000300003800C1\n" +
+      &":02000004FFFFFC\n" +
+      &":04000005000000CD2A\n" +
+      &":00000001FF";
+
+    assert_eq!(create_object_file_representation(records).unwrap(), expected_result);
   }
 
 }
