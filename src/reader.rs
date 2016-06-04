@@ -214,3 +214,69 @@ impl Record {
     }
   }
 }
+
+pub struct Reader<'a> {
+  /// Line-by-line iterator over the input.
+  line_iterator: str::Split<'a, &'a str>,
+  /// Reading may complete before the line iterator.
+  finished: bool,
+  /// A flag indicating that iteration should stop on first failure.
+  stop_after_first_error: bool
+}
+
+impl<'a> Reader<'a> {
+  /**
+   Designated initialized for the IHEX reader.
+   @param string The IHEX object file as a string.
+   @param stop_after_first_error Terminate the iterator after the first record fails to parse.
+   @return A new IHEX object file reader for the given string.
+   */
+  pub fn new(string: &'a str, stop_after_first_error: bool) -> Self {
+    Reader {
+      line_iterator: string.split("\n"),
+      finished: false,
+      stop_after_first_error: stop_after_first_error
+    }
+  }
+}
+
+impl<'a> Iterator for Reader<'a> {
+  type Item = Result<Record, ReaderError>;
+
+  /**
+   Iterates over the lines of the IHEX object, skipping any empty ones,
+   and returns the result of parsing that line.
+   */
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.finished {
+      return None;
+    }
+
+    loop {
+      let next_line_option = self.line_iterator.next();
+      
+      // No more lines need to be processed.
+      if let None = next_line_option {
+        self.finished = true;
+        return None;
+      }
+
+      // Unwrap the line and continue to the next if it is empty.
+      let next_line = next_line_option.unwrap();
+      if next_line.len() == 0 {
+        continue;
+      }
+
+      // Parse the record, and mark this finished if parse failed.
+      let parse_result = Record::from_record_string(next_line);
+      if parse_result.is_err() {
+        if self.stop_after_first_error {
+          self.finished = true;
+        }
+      }
+
+      return Some(parse_result);
+    }
+  }
+
+}
