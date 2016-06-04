@@ -1,46 +1,46 @@
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub enum Record {
-	/// Specifies a 16-bit offset address and up to 255 bytes of data.
-	/// Availability: I8HEX, I16HEX and I32HEX.
-	Data { offset: u16, value: Vec<u8> },
+  pub enum Record {
+  /// Specifies a 16-bit offset address and up to 255 bytes of data.
+  /// Availability: I8HEX, I16HEX and I32HEX.
+  Data { offset: u16, value: Vec<u8> },
 
-	/// Indicates the end of the object file. Must occur exactly once per file, at the end.
-	/// Availability: I8HEX, I16HEX and I32HEX.
-	EndOfFile,
+  /// Indicates the end of the object file. Must occur exactly once per file, at the end.
+  /// Availability: I8HEX, I16HEX and I32HEX.
+  EndOfFile,
 
-	/// Specifies bits 4-19 of the Segment Base Address (SBA) to address up to 1MiB.
-	/// Availability: I16HEX.
-	ExtendedSegmentAddress(u16),
+  /// Specifies bits 4-19 of the Segment Base Address (SBA) to address up to 1MiB.
+  /// Availability: I16HEX.
+  ExtendedSegmentAddress(u16),
 
-	/// Specifies the 20-bit segment address for the CS and IP registers.
-	/// Availability: I16HEX.
-	StartSegmentAddress { cs: u16, ip: u16 },
+  /// Specifies the 20-bit segment address for the CS and IP registers.
+  /// Availability: I16HEX.
+  StartSegmentAddress { cs: u16, ip: u16 },
 
-	/// Specifies the upper 16 bits of a 32-bit linear address.
-	/// The lower 16 bits are derived from the Data record load offset.
-	/// Availability: I32HEX.
-	ExtendedLinearAddress(u16),
+  /// Specifies the upper 16 bits of a 32-bit linear address.
+  /// The lower 16 bits are derived from the Data record load offset.
+  /// Availability: I32HEX.
+  ExtendedLinearAddress(u16),
 
-	/// Specifies the execution start address for the object file. 
-	/// This is the 32-bit linear address for register EIP.
-	/// Availability: I32HEX.
-	StartLinearAddress(u32)
+  /// Specifies the execution start address for the object file.
+  /// This is the 32-bit linear address for register EIP.
+  /// Availability: I32HEX.
+  StartLinearAddress(u32)
 }
 
 pub mod types {
-	/// Type specifier for a Data record.
-	pub const DATA: u8 = 0x00;
-	/// Type specifier for an End-Of-File record.
-	pub const END_OF_FILE: u8 = 0x01;
-	/// Type specifier for an Extended Segment Address record.
-	pub const EXTENDED_SEGMENT_ADDRESS: u8 = 0x02;
-	/// Type specifier for a Start Segment Address record.
-	pub const START_SEGMENT_ADDRESS: u8 = 0x03;
-	/// Type specifier for an Extended Linear Address record.
-	pub const EXTENDED_LINEAR_ADDRESS: u8 = 0x04;
-	/// Type specifier for a Start Linear Address record.
-	pub const START_LINEAR_ADDRESS: u8 = 0x05;
+  /// Type specifier for a Data record.
+  pub const DATA: u8 = 0x00;
+  /// Type specifier for an End-Of-File record.
+  pub const END_OF_FILE: u8 = 0x01;
+  /// Type specifier for an Extended Segment Address record.
+  pub const EXTENDED_SEGMENT_ADDRESS: u8 = 0x02;
+  /// Type specifier for a Start Segment Address record.
+  pub const START_SEGMENT_ADDRESS: u8 = 0x03;
+  /// Type specifier for an Extended Linear Address record.
+  pub const EXTENDED_LINEAR_ADDRESS: u8 = 0x04;
+  /// Type specifier for a Start Linear Address record.
+  pub const START_LINEAR_ADDRESS: u8 = 0x05;
 }
 
 impl Record {
