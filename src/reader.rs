@@ -19,7 +19,7 @@ pub enum ReaderError {
   /// The record is not all hexadecimal characters.
   ContainsInvalidCharacters,
   /// The checksum did not match.
-  ChecksumMismatch,
+  ChecksumMismatch(u8,u8),
   /// The record is not the length it claims.
   PayloadLengthMismatch,
   /// The record type is not supported.
@@ -36,7 +36,7 @@ impl Error for ReaderError {
       &ReaderError::RecordTooLong             => "Record string is longer than the longest valid record",
       &ReaderError::RecordNotEvenLength       => "Record does not contain a whole number of bytes",
       &ReaderError::ContainsInvalidCharacters => "Record contains invalid characters",
-      &ReaderError::ChecksumMismatch          => "The checksum for the record does not match",
+      &ReaderError::ChecksumMismatch(_,_)     => "The checksum for the record does not match",
       &ReaderError::PayloadLengthMismatch     => "The length of the payload does not match the length field",
       &ReaderError::UnsupportedRecordType(_)  => "The record specifies an unsupported IHEX record type",
       &ReaderError::InvalidLengthForType      => "The payload length is invalid for the IHEX record type"
@@ -107,13 +107,13 @@ impl Record {
         .collect::<Vec<u8>>();
 
     // Compute the checksum.
-    let validated_region_bytes = &(data_bytes.as_slice()[1 .. data_bytes.len()-1]);
+    let validated_region_bytes = &(data_bytes.as_slice()[0 .. data_bytes.len()-1]);
     let expected_checksum = *data_bytes.last().unwrap();
     let checksum = checksum(validated_region_bytes);
 
     // The read is failed if the checksum does not match.
     if checksum != expected_checksum {
-      return Err(ReaderError::ChecksumMismatch);
+      return Err(ReaderError::ChecksumMismatch(checksum, expected_checksum));
     }
 
     // Decode header values.
