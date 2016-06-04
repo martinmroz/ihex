@@ -221,7 +221,9 @@ pub struct Reader<'a> {
   /// Reading may complete before the line iterator.
   finished: bool,
   /// A flag indicating that iteration should stop on first failure.
-  stop_after_first_error: bool
+  stop_after_first_error: bool,
+  /// A flag indicating that iteration should stop on first EOF record encountered.
+  stop_after_eof: bool
 }
 
 impl<'a> Reader<'a> {
@@ -229,13 +231,15 @@ impl<'a> Reader<'a> {
    Designated initialized for the IHEX reader.
    @param string The IHEX object file as a string.
    @param stop_after_first_error Terminate the iterator after the first record fails to parse.
+   @param stop_after_eof Terminate the iterator after an EOF record is encountered, even if more records exist.
    @return A new IHEX object file reader for the given string.
    */
-  pub fn new(string: &'a str, stop_after_first_error: bool) -> Self {
+  pub fn new(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
       line_iterator: string.split("\n"),
       finished: false,
-      stop_after_first_error: stop_after_first_error
+      stop_after_first_error: stop_after_first_error,
+      stop_after_eof: stop_after_eof
     }
   }
 }
@@ -267,10 +271,18 @@ impl<'a> Iterator for Reader<'a> {
         continue;
       }
 
-      // Parse the record, and mark this finished if parse failed.
       let parse_result = Record::from_record_string(next_line);
-      if parse_result.is_err() {
+
+      // Check if iteration should end after a parse failure.
+      if let Err(_) = parse_result {
         if self.stop_after_first_error {
+          self.finished = true;
+        }
+      }
+
+      // Check if iteration should end after an EOF.
+      if let Ok(Record::EndOfFile) = parse_result {
+        if self.stop_after_eof {
           self.finished = true;
         }
       }
