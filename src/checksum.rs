@@ -6,12 +6,12 @@
  @result The correct checksum byte for the record.
  */
 pub fn checksum(data: &[u8]) -> u8 {
-	let sum: usize = 
-		data
-			.iter()
-			.fold(0, |acc, &value| acc.wrapping_add(value as usize));
+  let sum: usize =
+    data
+      .iter()
+      .fold(0, |acc, &value| acc.wrapping_add(value as usize));
 
-	let lsb = (sum & 0xFF) as u8;
+  let lsb = (sum & 0xFF) as u8;
   let checksum = (0 as u8).wrapping_sub(lsb);
   checksum
 }
