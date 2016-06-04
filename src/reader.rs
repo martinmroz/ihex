@@ -227,14 +227,15 @@ pub struct Reader<'a> {
 }
 
 impl<'a> Reader<'a> {
+
   /**
-   Designated initialized for the IHEX reader.
+   Designated initializer for the IHEX reader.
    @param string The IHEX object file as a string.
    @param stop_after_first_error Terminate the iterator after the first record fails to parse.
    @param stop_after_eof Terminate the iterator after an EOF record is encountered, even if more records exist.
    @return A new IHEX object file reader for the given string.
    */
-  pub fn new(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
+  pub fn new_stopping_after_error_and_eof(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
       line_iterator: string.split("\n"),
       finished: false,
@@ -242,6 +243,16 @@ impl<'a> Reader<'a> {
       stop_after_eof: stop_after_eof
     }
   }
+
+  /**
+   Create a new IHEX reader for the string which stops on first error or after the first EOF record.
+   @param string The IHEX object file as a string.
+   @return A new IHEX object file reader for the given string.
+   */
+  pub fn new(string: &'a str) -> Self {
+    Reader::new_stopping_after_error_and_eof(string, true, true)
+  }
+
 }
 
 impl<'a> Iterator for Reader<'a> {
