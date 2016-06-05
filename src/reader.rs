@@ -216,8 +216,10 @@ impl Record {
 }
 
 pub struct Reader<'a> {
-  /// Line-by-line iterator over the input.
-  line_iterator: str::Split<'a, &'a str>,
+  /// Input string.
+  input:  &'a str,
+  /// Current offset into the input string, in bytes.
+  offset: usize,
   /// Reading may complete before the line iterator.
   finished: bool,
   /// A flag indicating that iteration should stop on first failure.
@@ -237,7 +239,8 @@ impl<'a> Reader<'a> {
    */
   pub fn new_stopping_after_error_and_eof(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
-      line_iterator: string.split("\n"),
+      input: string,
+      offset: 0,
       finished: false,
       stop_after_first_error: stop_after_first_error,
       stop_after_eof: stop_after_eof
@@ -251,6 +254,19 @@ impl<'a> Reader<'a> {
    */
   pub fn new(string: &'a str) -> Self {
     Reader::new_stopping_after_error_and_eof(string, true, true)
+  }
+
+  /**
+   Private helper method for obtaining the next record string, skipping empty lines.
+   Increments the offset by the number of bytes processed. Does not respect the 'finished' flag.
+   @return The next record string to be read, or None if nothing is left to process.
+   */
+  fn next_record(&mut self) -> Option<&'a str> {
+    self.input[self.offset .. ]
+      .split('\n')
+      .inspect(|&x| self.offset += x.as_bytes().len() + '\n'.len_utf8())
+      .skip_while(|x| x.len() == 0)
+      .next()
   }
 
 }
@@ -267,38 +283,31 @@ impl<'a> Iterator for Reader<'a> {
       return None;
     }
 
-    loop {
-      let next_line_option = self.line_iterator.next();
-      
-      // No more lines need to be processed.
-      if let None = next_line_option {
+    match self.next_record() {
+      None => {
         self.finished = true;
-        return None;
+        None
       }
 
-      // Unwrap the line and continue to the next if it is empty.
-      let next_line = next_line_option.unwrap();
-      if next_line.len() == 0 {
-        continue;
-      }
+      Some(line) => {
+        let parse_result = Record::from_record_string(line);
 
-      let parse_result = Record::from_record_string(next_line);
-
-      // Check if iteration should end after a parse failure.
-      if let Err(_) = parse_result {
-        if self.stop_after_first_error {
-          self.finished = true;
+        // Check if iteration should end after a parse failure.
+        if let Err(_) = parse_result {
+          if self.stop_after_first_error {
+            self.finished = true;
+          }
         }
-      }
 
-      // Check if iteration should end after an EOF.
-      if let Ok(Record::EndOfFile) = parse_result {
-        if self.stop_after_eof {
-          self.finished = true;
+        // Check if iteration should end after an EOF.
+        if let Ok(Record::EndOfFile) = parse_result {
+          if self.stop_after_eof {
+            self.finished = true;
+          }
         }
-      }
 
-      return Some(parse_result);
+        Some(parse_result)
+      }
     }
   }
 
