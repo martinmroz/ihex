@@ -167,3 +167,69 @@ fn test_reader_processes_well_formed_ihex_object() {
   assert_eq!(reader.next(), Some(Ok(eof_rec)));
   assert_eq!(reader.next(), None);
 }
+
+#[test]
+fn test_reader_respects_stop_after_first_error_false() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n" +
+    &":\n" +
+    &":0400000300003800C1\n";
+
+  let data_rec = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let ssa_rec  = Record::StartSegmentAddress { cs: 0x0000, ip: 0x3800 };
+
+  let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, false);
+  assert_eq!(reader.next(), Some(Ok(data_rec)));
+  assert_eq!(reader.next(), Some(Err(ReaderError::RecordTooShort)));
+  assert_eq!(reader.next(), Some(Ok(ssa_rec)));
+  assert_eq!(reader.next(), None);
+}
+
+#[test]
+fn test_reader_respects_stop_after_first_error_true() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n" +
+    &":\n" +
+    &":0400000300003800C1\n";
+
+  let data_rec = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+
+  let mut reader = Reader::new_stopping_after_error_and_eof(&input, true, false);
+  assert_eq!(reader.next(), Some(Ok(data_rec)));
+  assert_eq!(reader.next(), Some(Err(ReaderError::RecordTooShort)));
+  assert_eq!(reader.next(), None);
+}
+
+#[test]
+fn test_reader_respects_stop_after_first_eof_false() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n" +
+    &":00000001FF\n" +
+    &":0400000300003800C1\n";
+
+  let data_rec = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let ssa_rec  = Record::StartSegmentAddress { cs: 0x0000, ip: 0x3800 };
+  let eof_rec  = Record::EndOfFile;
+
+  let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, false);
+  assert_eq!(reader.next(), Some(Ok(data_rec)));
+  assert_eq!(reader.next(), Some(Ok(eof_rec)));
+  assert_eq!(reader.next(), Some(Ok(ssa_rec)));
+  assert_eq!(reader.next(), None);
+}
+
+#[test]
+fn test_reader_respects_stop_after_first_eof_true() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n" +
+    &":00000001FF\n" +
+    &":0400000300003800C1\n";
+
+  let data_rec = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let eof_rec  = Record::EndOfFile;
+
+  let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, true);
+  assert_eq!(reader.next(), Some(Ok(data_rec)));
+  assert_eq!(reader.next(), Some(Ok(eof_rec)));
+  assert_eq!(reader.next(), None);
+}
