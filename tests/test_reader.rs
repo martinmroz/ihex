@@ -22,10 +22,6 @@ fn test_record_from_record_string_parses_valid_data_records() {
   );
 }
 
-// /// The record is not all hexadecimal characters.
-// ContainsInvalidCharacters,
-// /// The checksum did not match.
-// ChecksumMismatch(u8,u8),
 // /// The record is not the length it claims.
 // PayloadLengthMismatch,
 // /// The record type is not supported.
@@ -70,8 +66,27 @@ fn test_record_from_record_string_rejects_odd_length_records() {
 }
 
 #[test]
+fn test_record_from_record_string_rejects_non_hex_characters() {
+  assert_eq!(Record::from_record_string(":000000q1ff"), Err(ReaderError::ContainsInvalidCharacters));
+  assert_eq!(Record::from_record_string(":00000021f*"), Err(ReaderError::ContainsInvalidCharacters));
+  assert_eq!(Record::from_record_string(":^0000001FF"), Err(ReaderError::ContainsInvalidCharacters));
+  assert_eq!(Record::from_record_string(":™0000001FF"), Err(ReaderError::ContainsInvalidCharacters));
+}
+
+#[test]
+fn test_record_from_record_string_detects_invalid_checksums() {
+  assert_eq!(Record::from_record_string(":0B0010006164647265737320676170FF"), Err(ReaderError::ChecksumMismatch(0xA7,0xFF)));
+  assert_eq!(Record::from_record_string(":0000000100"), Err(ReaderError::ChecksumMismatch(0xFF,0x00)));
+  assert_eq!(Record::from_record_string(":020000021200EB"), Err(ReaderError::ChecksumMismatch(0xEA,0xEB)));
+  assert_eq!(Record::from_record_string(":04000003000038001C"), Err(ReaderError::ChecksumMismatch(0xC1,0x1C)));
+  assert_eq!(Record::from_record_string(":02000004FFFFFD"), Err(ReaderError::ChecksumMismatch(0xFC,0xFD)));
+  assert_eq!(Record::from_record_string(":04000005000001CD2A"), Err(ReaderError::ChecksumMismatch(0x29,0x2A)));
+}
+
+#[test]
 fn test_record_from_record_string_parses_valid_eof_record() {
   assert_eq!(Record::from_record_string(":00000001FF"), Ok(Record::EndOfFile));
+  assert_eq!(Record::from_record_string(":00000001ff"), Ok(Record::EndOfFile));
 }
 
 #[test]
