@@ -80,16 +80,16 @@ impl Record {
       return Err(ReaderError::MissingStartCode);
     }
 
-    let data_portion = &string[1..];
+    let data_portion = &string[1 .. ];
     let data_poriton_length = data_portion.chars().count();
 
     // Basic sanity-checking the input record string.
-    if (data_poriton_length % 2) != 0 {
-      return Err(ReaderError::RecordNotEvenLength);
-    } else if data_poriton_length < SMALLEST_RECORD_CHAR_COUNT {
+    if data_poriton_length < SMALLEST_RECORD_CHAR_COUNT {
       return Err(ReaderError::RecordTooShort);
     } else if data_poriton_length > LARGEST_RECORD_CHAR_COUNT {
       return Err(ReaderError::RecordTooLong);
+    } else if (data_poriton_length % 2) != 0 {
+      return Err(ReaderError::RecordNotEvenLength);
     }
 
     // Validate all characters are hexadecimal.

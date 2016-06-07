@@ -22,6 +22,53 @@ fn test_record_from_record_string_parses_valid_data_records() {
   );
 }
 
+// /// The record is not all hexadecimal characters.
+// ContainsInvalidCharacters,
+// /// The checksum did not match.
+// ChecksumMismatch(u8,u8),
+// /// The record is not the length it claims.
+// PayloadLengthMismatch,
+// /// The record type is not supported.
+// UnsupportedRecordType(u8),
+// /// The payload length does not match the record type.
+// InvalidLengthForType,
+
+#[test]
+fn test_record_from_record_string_rejects_missing_start_code() {
+  assert_eq!(Record::from_record_string("00000001FF"), Err(ReaderError::MissingStartCode));
+}
+
+#[test]
+fn test_record_from_record_string_rejects_short_records() {
+  assert_eq!(Record::from_record_string(":"), Err(ReaderError::RecordTooShort));
+  assert_eq!(Record::from_record_string(":00"), Err(ReaderError::RecordTooShort));
+  assert_eq!(Record::from_record_string(":00000001F"), Err(ReaderError::RecordTooShort));
+}
+
+#[test]
+fn test_record_from_record_string_rejects_long_records() {
+  let longest_valid_data = (0..255).map(|_| 0u8).collect::<Vec<u8>>();
+  let longest_valid_data_record = Record::Data { offset: 0x0010, value: longest_valid_data };
+  let longest_valid_string = longest_valid_data_record.to_string();
+  let shortest_invalid_string = longest_valid_string.clone() + &"0";
+
+  assert_eq!(longest_valid_string.len(), 521);
+  assert_eq!(Record::from_record_string(&longest_valid_string).is_ok(), true);
+
+  assert_eq!(shortest_invalid_string.len(), 522);
+  assert_eq!(Record::from_record_string(&shortest_invalid_string), Err(ReaderError::RecordTooLong));
+}
+
+#[test]
+fn test_record_from_record_string_rejects_odd_length_records() {
+  assert_eq!(Record::from_record_string(":0B0010006164647265737320676170A7D"), Err(ReaderError::RecordNotEvenLength));
+  assert_eq!(Record::from_record_string(":00000001FFF"), Err(ReaderError::RecordNotEvenLength));
+  assert_eq!(Record::from_record_string(":0200000212FEECD"), Err(ReaderError::RecordNotEvenLength));
+  assert_eq!(Record::from_record_string(":04000003123438007BD"), Err(ReaderError::RecordNotEvenLength));
+  assert_eq!(Record::from_record_string(":02000004ABCD823"), Err(ReaderError::RecordNotEvenLength));
+  assert_eq!(Record::from_record_string(":0400000512345678E34"), Err(ReaderError::RecordNotEvenLength));
+}
+
 #[test]
 fn test_record_from_record_string_parses_valid_eof_record() {
   assert_eq!(Record::from_record_string(":00000001FF"), Ok(Record::EndOfFile));
@@ -76,6 +123,5 @@ fn test_reader_processes_well_formed_ihex_object() {
   assert_eq!(reader.next(), Some(Ok(ela_rec)));
   assert_eq!(reader.next(), Some(Ok(sla_rec)));
   assert_eq!(reader.next(), Some(Ok(eof_rec)));
-  assert_eq!(reader.next(), None);
   assert_eq!(reader.next(), None);
 }
