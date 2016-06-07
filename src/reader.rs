@@ -262,6 +262,10 @@ impl<'a> Reader<'a> {
    @return The next record string to be read, or None if nothing is left to process.
    */
   fn next_record(&mut self) -> Option<&'a str> {
+    if self.offset >= self.input.len() {
+      return None;
+    }
+    
     self.input[self.offset .. ]
       .split('\n')
       .inspect(|&x| self.offset += x.as_bytes().len() + '\n'.len_utf8())
