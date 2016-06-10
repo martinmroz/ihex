@@ -15,7 +15,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ihex = "0.1"
+ihex = "1.0"
 ```
 
 In addition, and this to your crate root:
