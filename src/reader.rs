@@ -78,11 +78,17 @@ pub mod payload_sizes {
 }
 
 impl Record {
-  /**
-   Parses a given IHEX string representation of a Record and 
-   @param string The IHEX string representation of the record.
-   @return The Record corresponding to the IHEX string representation.
-   */
+  ///
+  /// Constructs a new `Record` by parsing `string`.
+  ///
+  /// # Examples
+  ///
+  /// ```rust
+  /// use ihex::record::Record;
+  ///
+  /// let record = Record::from_record_string(":");
+  /// ```
+  ///
   pub fn from_record_string(string: &str) -> Result<Self, ReaderError> {
     if let Some(':') = string.chars().next() {} else {
       return Err(ReaderError::MissingStartCode);
@@ -238,13 +244,12 @@ pub struct Reader<'a> {
 
 impl<'a> Reader<'a> {
 
-  /**
-   Designated initializer for the IHEX reader.
-   @param string The IHEX object file as a string.
-   @param stop_after_first_error Terminate the iterator after the first record fails to parse.
-   @param stop_after_eof Terminate the iterator after an EOF record is encountered, even if more records exist.
-   @return A new IHEX object file reader for the given string.
-   */
+  ///
+  /// Creates a new IHEX reader over `string` with the specified configuration parameters. If 
+  /// `stop_after_first_error` is `true` then the first error will make all subsequent calls
+  /// to `next()` return `None`. If `stop_after_eof` is `true` then the first EoF record
+  /// will make all subsequent calls to `next()` return `None`.
+  ///
   pub fn new_stopping_after_error_and_eof(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
       input: string,
@@ -255,20 +260,18 @@ impl<'a> Reader<'a> {
     }
   }
 
-  /**
-   Create a new IHEX reader for the string which stops on first error or after the first EOF record.
-   @param string The IHEX object file as a string.
-   @return A new IHEX object file reader for the given string.
-   */
+  ///
+  /// Creates a new IHEX reader over `string` with default configuration parameters.
+  ///
   pub fn new(string: &'a str) -> Self {
     Reader::new_stopping_after_error_and_eof(string, true, true)
   }
 
-  /**
-   Private helper method for obtaining the next record string, skipping empty lines.
-   Increments the offset by the number of bytes processed. Does not respect the 'finished' flag.
-   @return The next record string to be read, or None if nothing is left to process.
-   */
+  ///
+  /// Private helper method for obtaining the next record string, skipping empty lines.
+  /// Increments the offset by the number of bytes processed. Does not respect the 'finished' flag.
+  /// It will return either the next record string to be read, or None if nothing is left to process.
+  ///
   fn next_record(&mut self) -> Option<&'a str> {
     if self.offset >= self.input.len() {
       return None;
@@ -286,10 +289,10 @@ impl<'a> Reader<'a> {
 impl<'a> Iterator for Reader<'a> {
   type Item = Result<Record, ReaderError>;
 
-  /**
-   Iterates over the lines of the IHEX object, skipping any empty ones,
-   and returns the result of parsing that line.
-   */
+  ///
+  /// Iterates over the lines of the IHEX object, skipping any empty ones,
+  /// and returns the result of parsing that line.
+  ///
   fn next(&mut self) -> Option<Self::Item> {
     if self.finished {
       return None;

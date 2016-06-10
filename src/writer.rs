@@ -40,9 +40,9 @@ impl fmt::Display for WriterError {
 }
 
 impl Record {
-  /**
-   @return The IHEX record representation of the receiver, or an error on failure.
-   */
+  ///
+  /// Returns the IHEX record representation of the receiver, or an error on failure.
+  ///
   pub fn to_string(&self) -> Result<String,WriterError> {
     match self {
       &Record::Data { offset, ref value } =>
@@ -83,15 +83,16 @@ impl Record {
   }
 }
 
-/**
- IHEX records all contain the following fields:
- +-----+------------+--------------+----------+------------+-------------+
- | ':' | Length: u8 | Address: u16 | Type: u8 | Data: [u8] | Checkum: u8 |
- +-----+------------+--------------+----------+------------+-------------+
- Any multi-byte values are represented big endian.
- @note This method will fail if a data record is more than 255 bytes long.
- @return A formatted IHEX record on success or an error on failure.
- */
+///
+/// IHEX records all contain the following fields:
+/// `+-----+------------+--------------+----------+------------+-------------+`
+/// `| ':' | Length: u8 | Address: u16 | Type: u8 | Data: [u8] | Checkum: u8 |`
+/// `+-----+------------+--------------+----------+------------+-------------+`
+/// Any multi-byte values are represented big endian.
+/// Note that this method will fail if a data record is more than 255 bytes long.
+/// This method returns a formatted IHEX record on success with the specified
+/// `record_type`, `address` and `data` values. On failure, an error is returned.
+///
 fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String,WriterError> {
   if data.len() > 0xFF {
     return Err(WriterError::DataExceedsMaximumLength(data.len()));
@@ -129,14 +130,26 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String,Wr
   Ok(record_string)
 }
 
-/**
- Generates an Intel HEX object file representation of the record set. It is the callers 
- responsibility to ensure that no overlapping data ranges are defined within the
- object file. The set of records must have exactly 1 EOF record, 
- and it must be the last record in the list.
- @param records Set of records to include in the object file representation.
- @return The object file representation if built successfully, or a failure reason.
- */
+///
+/// Generates an Intel HEX object file representation of the `records` provided. It is the callers 
+/// responsibility to ensure that no overlapping data ranges are defined within the
+/// object file. In addition, `records` must have contain 1 EoF record, 
+/// and it must be the last element in `records`.
+///
+/// # Example
+///
+/// ```rust
+/// use ihex::record::Record;
+/// use ihex::writer;
+///
+/// let records = &[
+///   Record::Data { offset: 0x0010, value: vec![0x48,0x65,0x6C,0x6C,0x6F] },
+///   Record::EndOfFile
+/// ];
+///
+/// let result = writer::create_object_file_representation(records);
+/// ```
+///
 pub fn create_object_file_representation(records: &[Record]) -> Result<String,WriterError> {
   if let Some(&Record::EndOfFile) = records.last() {} else {
     return Err(WriterError::MissingEndOfFileRecord);

@@ -11,7 +11,12 @@
 pub enum Record {
   /// Specifies a 16-bit offset address and up to 255 bytes of data.
   /// Availability: I8HEX, I16HEX and I32HEX.
-  Data { offset: u16, value: Vec<u8> },
+  Data {
+    /// The offset of the data record in memory.
+    offset: u16,
+    /// Up to 255 bytes of data to be written to memory.
+    value: Vec<u8>
+  },
 
   /// Indicates the end of the object file. Must occur exactly once per file, at the end.
   /// Availability: I8HEX, I16HEX and I32HEX.
@@ -21,9 +26,14 @@ pub enum Record {
   /// Availability: I16HEX.
   ExtendedSegmentAddress(u16),
 
-  /// Specifies the 20-bit segment address for the CS and IP registers.
+  /// Specifies the 20-bit segment address via the CS and IP registers.
   /// Availability: I16HEX.
-  StartSegmentAddress { cs: u16, ip: u16 },
+  StartSegmentAddress {
+    /// Value of the CS register.
+    cs: u16,
+    /// Value of the IP register.
+    ip: u16
+  },
 
   /// Specifies the upper 16 bits of a 32-bit linear address.
   /// The lower 16 bits are derived from the Data record load offset.
@@ -53,7 +63,7 @@ pub mod types {
 
 impl Record {
   /**
-   @return The record type specifier corresponding to the receiver.
+   Returns the record type specifier corresponding to the receiver.
    */
   pub fn record_type(&self) -> u8 {
     match self {

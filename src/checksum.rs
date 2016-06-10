@@ -8,10 +8,8 @@
 //
 
 /**
- The Intel HEX checksum is computed by summing all relevant bytes in a
- record and taking the two's complement of the least significant byte of the sum.
- @param data Data to checksum.
- @result The correct checksum byte for the record.
+ Computes the Intel HEX checksum of `data`. This is done by summing all the bytes `data
+ and taking the two's complement of the least significant byte of the sum.
  */
 pub fn checksum(data: &[u8]) -> u8 {
   let sum: usize =
