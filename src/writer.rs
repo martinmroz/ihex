@@ -132,11 +132,9 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String,Wr
     return Err(WriterError::MissingEndOfFileRecord);
   }
 
-  let record_strings_result =
-    records
-      .iter()
-      .map(|ref record| record.to_string())
-      .collect::<Result<Vec<String>, WriterError>>();
-
-  record_strings_result.map(|list| list.join("\n"))
+  records
+    .iter()
+    .map(|ref record| record.to_string())
+    .collect::<Result<Vec<String>, WriterError>>()
+    .map(|list| list.join("\n"))
 }
