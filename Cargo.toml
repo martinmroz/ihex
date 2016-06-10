@@ -1,6 +1,14 @@
 [package]
-name = "ihex"
 version = "0.1.0"
+
+name = "ihex"
 authors = ["Martin Mroz <martinmroz@gmail.com>"]
+description = "A Rust library for parsing and generating Intel HEX (or IHEX) objects."
+homepage = "http://github.com/martinmroz/ihex"
+repository = "http://github.com/martinmroz/ihex"
+readme = "README.md"
+keywords = ["ihex", "intel", "hex"]
+license = "MIT"
+license-file = "LICENSE"
 
 [dependencies]
