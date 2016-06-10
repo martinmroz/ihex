@@ -5,7 +5,7 @@ A Rust library for parsing and generating [Intel HEX](https://en.wikipedia.org/w
 (or IHEX) objects. This format is commonly used for representing compiled program code
 and data to be loaded into a microcontroller, flash memory or ROM.
 
-[![](http://meritbadge.herokuapp.com/regex)](https://crates.io/crates/ihex)
+[![](http://meritbadge.herokuapp.com/ihex)](https://crates.io/crates/ihex)
 
 ### Usage
 
