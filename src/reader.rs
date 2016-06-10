@@ -58,13 +58,14 @@ impl fmt::Display for ReaderError {
   }
 }
 
-/// The smallest record (excluding start code) is Byte Count + Address + Record Type + Checksum.
-const SMALLEST_RECORD_CHAR_COUNT: usize = (1 + 2 + 1 + 1) * 2;
+mod char_counts {
+  /// The smallest record (excluding start code) is Byte Count + Address + Record Type + Checksum.
+  pub const SMALLEST_RECORD_EXCLUDING_START_CODE: usize = (1 + 2 + 1 + 1) * 2;
+  /// The smallest record (excluding start code) {Smallest} + a 255 byte payload region.
+  pub const LARGEST_RECORD_EXCLUDING_START_CODE: usize = SMALLEST_RECORD_EXCLUDING_START_CODE + (255 * 2);
+}
 
-/// The smallest record (excluding start code) {Smallest} + a 255 byte payload region.
-const LARGEST_RECORD_CHAR_COUNT: usize = SMALLEST_RECORD_CHAR_COUNT + (255 * 2);
-
-pub mod payload_sizes {
+mod payload_sizes {
   /// An EoF record has no payload.
   pub const END_OF_FILE: usize = 0;
   /// An Extended Segment Address has a 16-bit payload.
@@ -98,9 +99,9 @@ impl Record {
     let data_poriton_length = data_portion.chars().count();
 
     // Basic sanity-checking the input record string.
-    if data_poriton_length < SMALLEST_RECORD_CHAR_COUNT {
+    if data_poriton_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
       return Err(ReaderError::RecordTooShort);
-    } else if data_poriton_length > LARGEST_RECORD_CHAR_COUNT {
+    } else if data_poriton_length > char_counts::LARGEST_RECORD_EXCLUDING_START_CODE {
       return Err(ReaderError::RecordTooLong);
     } else if (data_poriton_length % 2) != 0 {
       return Err(ReaderError::RecordNotEvenLength);
