@@ -16,7 +16,7 @@ use record::*;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ReaderError {
-  /// A record string does not being with a ':'.
+  /// The record provided does not begin with a ':'.
   MissingStartCode,
   /// The record provided is shorter than the smallest valid.
   RecordTooShort,
