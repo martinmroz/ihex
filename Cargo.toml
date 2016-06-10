@@ -9,6 +9,5 @@ repository = "http://github.com/martinmroz/ihex"
 readme = "README.md"
 keywords = ["ihex", "intel", "hex"]
 license = "MIT"
-license-file = "LICENSE"
 
 [dependencies]
