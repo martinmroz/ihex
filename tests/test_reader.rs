@@ -2,8 +2,8 @@
 
 extern crate ihex;
 
-use ihex::record::Record;
 use ihex::reader::*;
+use ihex::record::Record;
 
 #[test]
 fn test_record_from_record_string_rejects_missing_start_code() {
