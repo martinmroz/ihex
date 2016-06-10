@@ -76,6 +76,17 @@ fn test_create_object_file_representation_incorrect_termination() {
 }
 
 #[test]
+fn test_create_object_file_representation_with_multiple_eof_records() {
+  let records = &[
+    Record::EndOfFile,
+    Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] },
+    Record::EndOfFile
+  ];
+
+  assert_eq!(create_object_file_representation(records), Err(WriterError::MultipleEndOfFileRecords(2)));
+}
+
+#[test]
 fn test_create_object_file_representation_eof_only() {
   let records = &[Record::EndOfFile];
   let expected_result = String::from(":00000001FF");

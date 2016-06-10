@@ -11,6 +11,8 @@ pub enum WriterError {
   DataExceedsMaximumLength(usize),
   /// Object does not end in an EoF record.
   MissingEndOfFileRecord,
+  /// Object contains multiple EoF records.
+  MultipleEndOfFileRecords(usize),
 }
 
 impl Error for WriterError {
@@ -18,6 +20,7 @@ impl Error for WriterError {
     match self {
       &WriterError::DataExceedsMaximumLength(_) => "Record contains data exceeding 255 bytes.",
       &WriterError::MissingEndOfFileRecord      => "Object files must end with an End of File Record.",
+      &WriterError::MultipleEndOfFileRecords(_) => "Object files must contain exactle one End of File record.",
     }
   }
 }
@@ -78,8 +81,8 @@ impl Record {
  | ':' | Length: u8 | Address: u16 | Type: u8 | Data: [u8] | Checkum: u8 |
  +-----+------------+--------------+----------+------------+-------------+
  Any multi-byte values are represented big endian.
- @note This method will panic if data is more than 255 bytes long.
- @return Formatted IHEX record.
+ @note This method will fail if a data record is more than 255 bytes long.
+ @return A formatted IHEX record on success or an error on failure.
  */
 fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String,WriterError> {
   if data.len() > 0xFF {
@@ -121,15 +124,24 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String,Wr
 /**
  Generates an Intel HEX object file representation of the record set. It is the callers 
  responsibility to ensure that no overlapping data ranges are defined within the
- object file. The set of records MUST exactly 1 EOF record as the last record in the list.
- As with Record::to_string() this function may panic if a data record specifies
- more than 255 bytes of data.
+ object file. The set of records must have exactly 1 EOF record, 
+ and it must be the last record in the list.
  @param records Set of records to include in the object file representation.
- @return Some(_) if the an object file representation was built successfully, or None.
+ @return The object file representation if built successfully, or a failure reason.
  */
 pub fn create_object_file_representation(records: &[Record]) -> Result<String,WriterError> {
   if let Some(&Record::EndOfFile) = records.last() {} else {
     return Err(WriterError::MissingEndOfFileRecord);
+  }
+
+  // Validate exactly one EoF record exists.
+  let eof_record_count = 
+    records
+      .iter()
+      .filter(|&x| if let &Record::EndOfFile = x { true } else { false })
+      .count();
+  if eof_record_count > 1 {
+    return Err(WriterError::MultipleEndOfFileRecords(eof_record_count));
   }
 
   records
