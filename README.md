@@ -18,10 +18,32 @@ Add the following to your `Cargo.toml`:
 ihex = "0.1"
 ```
 
-In addition, and this to your crate:
+In addition, and this to your crate root:
 
 ```rust
 extern crate ihex;
+```
+
+Here is an example which builds an IHEX object file with test data and prints it:
+
+
+```rust
+extern crate ihex;
+
+use ihex::record::Record;
+use ihex::writer;
+
+fn main() {
+  let records = &[
+    Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] },
+    Record::EndOfFile
+  ];
+
+  let result = writer::create_object_file_representation(records);
+  if result.is_ok() {
+    println!("{}", result.unwrap());
+  }
+}
 ```
 
 # License
