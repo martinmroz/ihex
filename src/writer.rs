@@ -1,6 +1,6 @@
 
-use record::*;
 use checksum::*;
+use record::*;
 
 impl ToString for Record {
   /**

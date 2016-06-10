@@ -3,8 +3,8 @@ use std::error::Error;
 use std::fmt;
 use std::str;
 
-use record::*;
 use checksum::*;
+use record::*;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ReaderError {
@@ -51,7 +51,7 @@ impl fmt::Display for ReaderError {
 }
 
 /// The smallest record (excluding start code) is Byte Count + Address + Record Type + Checksum.
-const SMALLEST_RECORD_CHAR_COUNT: usize = (5 * 2);
+const SMALLEST_RECORD_CHAR_COUNT: usize = (1 + 2 + 1 + 1) * 2;
 
 /// The smallest record (excluding start code) {Smallest} + a 255 byte payload region.
 const LARGEST_RECORD_CHAR_COUNT: usize = SMALLEST_RECORD_CHAR_COUNT + (255 * 2);

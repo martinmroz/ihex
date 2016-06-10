@@ -261,3 +261,18 @@ fn test_reader_allow_no_trailing_newlines_on_one_record() {
   assert_eq!(reader.next(), None);
 }
 
+#[test]
+fn test_reader_respects_ignores_extra_newlines() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n" +
+    &":00000001FF\n\n\n" +
+    &":0400000300003800C1\n\n";
+
+  let data_rec = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let eof_rec  = Record::EndOfFile;
+
+  let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, true);
+  assert_eq!(reader.next(), Some(Ok(data_rec)));
+  assert_eq!(reader.next(), Some(Ok(eof_rec)));
+  assert_eq!(reader.next(), None);
+}
