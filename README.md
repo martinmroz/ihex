@@ -6,6 +6,8 @@ A Rust library for parsing and generating [Intel HEX](https://en.wikipedia.org/w
 and data to be loaded into a microcontroller, flash memory or ROM.
 
 [![](http://meritbadge.herokuapp.com/ihex)](https://crates.io/crates/ihex)
+[![Build Status](https://travis-ci.org/martinmroz/ihex.svg?branch=master)](https://travis-ci.org/martinmroz/ihex)
+[![Coverage Status](https://coveralls.io/repos/github/martinmroz/ihex/badge.svg?branch=master)](https://coveralls.io/github/martinmroz/ihex?branch=master)
 
 ### Usage
 
