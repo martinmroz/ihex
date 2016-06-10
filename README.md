@@ -24,6 +24,6 @@ extern crate ihex;
 
 # License
 
-`ihex` is distributed under the terms of both the MIT license.
+`ihex` is distributed under the terms of the MIT license.
 
 See LICENSE for details.
