@@ -39,7 +39,7 @@ impl Error for ReaderError {
       &ReaderError::ChecksumMismatch(_,_)     => "The checksum for the record does not match",
       &ReaderError::PayloadLengthMismatch     => "The length of the payload does not match the length field",
       &ReaderError::UnsupportedRecordType(_)  => "The record specifies an unsupported IHEX record type",
-      &ReaderError::InvalidLengthForType      => "The payload length is invalid for the IHEX record type"
+      &ReaderError::InvalidLengthForType      => "The payload length is invalid for the IHEX record type",
     }
   }
 }

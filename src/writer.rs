@@ -1,12 +1,38 @@
 
+use std::error::Error;
+use std::fmt;
+
 use checksum::*;
 use record::*;
 
-impl ToString for Record {
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum WriterError {
+  /// A record contains data too large to represent.
+  DataExceedsMaximumLength(usize),
+  /// Object does not end in an EoF record.
+  MissingEndOfFileRecord,
+}
+
+impl Error for WriterError {
+  fn description(&self) -> &str {
+    match self {
+      &WriterError::DataExceedsMaximumLength(_) => "Record contains data exceeding 255 bytes.",
+      &WriterError::MissingEndOfFileRecord      => "Object files must end with an End of File Record.",
+    }
+  }
+}
+
+impl fmt::Display for WriterError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "Failed to generate IHEX record: {}.", self.description())
+  }
+}
+
+impl Record {
   /**
-   @return The IHEX record representation of the receiver as a String.
+   @return The IHEX record representation of the receiver, or an error on failure.
    */
-  fn to_string(&self) -> String {
+  pub fn to_string(&self) -> Result<String,WriterError> {
     match self {
       &Record::Data { offset, ref value } =>
         format_record(self.record_type(), offset, value.as_slice()),
@@ -55,8 +81,10 @@ impl ToString for Record {
  @note This method will panic if data is more than 255 bytes long.
  @return Formatted IHEX record.
  */
-fn format_record(record_type: u8, address: u16, data: &[u8]) -> String {
-  assert!(data.len() <= 0xFF);
+fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String,WriterError> {
+  if data.len() > 0xFF {
+    return Err(WriterError::DataExceedsMaximumLength(data.len()));
+  }
 
   // Allocate space for the data region (everything but the start code).
   let data_length = 1 + 2 + 1 + data.len() + 1;
@@ -79,13 +107,15 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> String {
 
   // Construct the record.
   result.push(':');
-  data_region
+  let record_string = data_region
     .iter()
     .map(|&byte| format!("{:02X}", byte))
     .fold(result, |mut acc, ref byte_string| { 
       acc.push_str(byte_string); 
       acc 
-    })
+    });
+
+  Ok(record_string)
 }
 
 /**
@@ -97,17 +127,16 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> String {
  @param records Set of records to include in the object file representation.
  @return Some(_) if the an object file representation was built successfully, or None.
  */
-pub fn create_object_file_representation(records: &[Record]) -> Option<String> {
+pub fn create_object_file_representation(records: &[Record]) -> Result<String,WriterError> {
   if let Some(&Record::EndOfFile) = records.last() {} else {
-    return None;
+    return Err(WriterError::MissingEndOfFileRecord);
   }
 
-  let object_file_representation = 
+  let record_strings_result =
     records
       .iter()
       .map(|ref record| record.to_string())
-      .collect::<Vec<_>>()
-      .join("\n");
+      .collect::<Result<Vec<String>, WriterError>>();
 
-  Some(object_file_representation)
+  record_strings_result.map(|list| list.join("\n"))
 }

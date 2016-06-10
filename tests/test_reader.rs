@@ -21,7 +21,7 @@ fn test_record_from_record_string_rejects_short_records() {
 fn test_record_from_record_string_rejects_long_records() {
   let longest_valid_data = (0..255).map(|_| 0u8).collect::<Vec<u8>>();
   let longest_valid_data_record = Record::Data { offset: 0x0010, value: longest_valid_data };
-  let longest_valid_string = longest_valid_data_record.to_string();
+  let longest_valid_string = longest_valid_data_record.to_string().unwrap();
   let shortest_invalid_string = longest_valid_string.clone() + &"0";
 
   assert_eq!(longest_valid_string.len(), 521);
