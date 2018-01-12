@@ -231,10 +231,8 @@ impl Record {
 }
 
 pub struct Reader<'a> {
-  /// Input string.
-  input:  &'a str,
-  /// Current offset into the input string, in bytes.
-  offset: usize,
+  /// Iterator over distinct lines of the input regardless of line ending.
+  line_iterator: str::Lines<'a>,
   /// Reading may complete before the line iterator.
   finished: bool,
   /// A flag indicating that iteration should stop on first failure.
@@ -253,8 +251,7 @@ impl<'a> Reader<'a> {
   ///
   pub fn new_stopping_after_error_and_eof(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
-      input: string,
-      offset: 0,
+      line_iterator: string.lines(),
       finished: false,
       stop_after_first_error: stop_after_first_error,
       stop_after_eof: stop_after_eof
@@ -274,15 +271,17 @@ impl<'a> Reader<'a> {
   /// It will return either the next record string to be read, or None if nothing is left to process.
   ///
   fn next_record(&mut self) -> Option<&'a str> {
-    if self.offset >= self.input.len() {
-      return None;
+    let mut result = None;
+
+    // Locate the first non-empty line.
+    while let Some(line) = self.line_iterator.next() {
+      if line.len() > 0 {
+        result = Some(line);
+        break;
+      }
     }
     
-    self.input[self.offset .. ]
-      .split('\n')
-      .inspect(|&x| self.offset += x.as_bytes().len() + '\n'.len_utf8())
-      .skip_while(|x| x.len() == 0)
-      .next()
+    return result;
   }
 
 }
