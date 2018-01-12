@@ -113,7 +113,7 @@ impl Record {
     }
 
     // Convert the character stream to bytes.
-    let data_bytes = 
+    let mut data_bytes =
       data_portion
         .as_bytes()
         .chunks(2)
@@ -122,8 +122,8 @@ impl Record {
         .collect::<Vec<u8>>();
 
     // Compute the checksum.
-    let validated_region_bytes = &(data_bytes.as_slice()[0 .. data_bytes.len()-1]);
-    let expected_checksum = *data_bytes.last().unwrap();
+    let expected_checksum = data_bytes.pop().unwrap();
+    let validated_region_bytes = data_bytes.as_slice();
     let checksum = checksum(validated_region_bytes);
 
     // The read is failed if the checksum does not match.
