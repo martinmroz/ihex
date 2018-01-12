@@ -98,6 +98,11 @@ impl Record {
     let data_portion = &string[1 .. ];
     let data_poriton_length = data_portion.chars().count();
 
+    // Validate all characters are hexadecimal.
+    if data_portion.chars().all(|character| character.is_digit(16)) == false {
+      return Err(ReaderError::ContainsInvalidCharacters);
+    }
+
     // Basic sanity-checking the input record string.
     if data_poriton_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
       return Err(ReaderError::RecordTooShort);
@@ -105,11 +110,6 @@ impl Record {
       return Err(ReaderError::RecordTooLong);
     } else if (data_poriton_length % 2) != 0 {
       return Err(ReaderError::RecordNotEvenLength);
-    }
-
-    // Validate all characters are hexadecimal.
-    if data_portion.chars().all(|character| character.is_digit(16)) == false {
-      return Err(ReaderError::ContainsInvalidCharacters);
     }
 
     // Convert the character stream to bytes.
