@@ -98,7 +98,7 @@ impl Record {
     let data_portion = &string[1 .. ];
     let data_poriton_length = data_portion.chars().count();
 
-    // Validate all characters are hexadecimal.
+    // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
     if data_portion.chars().all(|character| character.is_digit(16)) == false {
       return Err(ReaderError::ContainsInvalidCharacters);
     }
