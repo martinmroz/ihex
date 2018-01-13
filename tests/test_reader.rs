@@ -258,6 +258,24 @@ fn test_reader_allow_no_trailing_newlines() {
 }
 
 #[test]
+fn test_reader_respects_all_newline_formats() {
+  let input = String::new() +
+    &":0B0010006164647265737320676170A7\n"   + // Unix LF
+    &":0B0010006164647265737320676170A7\r\n" + // Windows CRLF
+    &":00000001FF\r";                          // MacOS CR
+
+  let data_rec_1 = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let data_rec_2 = Record::Data { offset: 0x0010, value: vec![0x61,0x64,0x64,0x72,0x65,0x73,0x73,0x20,0x67,0x61,0x70] };
+  let eof_rec    = Record::EndOfFile;
+
+  let mut reader = Reader::new(&input);
+  assert_eq!(reader.next(), Some(Ok(data_rec_1)));
+  assert_eq!(reader.next(), Some(Ok(data_rec_2)));
+  assert_eq!(reader.next(), Some(Ok(eof_rec)));
+  assert_eq!(reader.next(), None);
+}
+
+#[test]
 fn test_reader_allow_no_trailing_newlines_on_one_record() {
   let input = String::from(":0B0010006164647265737320676170A7");
 

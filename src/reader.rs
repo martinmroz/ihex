@@ -98,6 +98,11 @@ impl Record {
     let data_portion = &string[1 .. ];
     let data_poriton_length = data_portion.chars().count();
 
+    // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
+    if data_portion.chars().all(|character| character.is_digit(16)) == false {
+      return Err(ReaderError::ContainsInvalidCharacters);
+    }
+
     // Basic sanity-checking the input record string.
     if data_poriton_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
       return Err(ReaderError::RecordTooShort);
@@ -107,13 +112,8 @@ impl Record {
       return Err(ReaderError::RecordNotEvenLength);
     }
 
-    // Validate all characters are hexadecimal.
-    if data_portion.chars().all(|character| character.is_digit(16)) == false {
-      return Err(ReaderError::ContainsInvalidCharacters);
-    }
-
     // Convert the character stream to bytes.
-    let data_bytes = 
+    let mut data_bytes =
       data_portion
         .as_bytes()
         .chunks(2)
@@ -122,8 +122,8 @@ impl Record {
         .collect::<Vec<u8>>();
 
     // Compute the checksum.
-    let validated_region_bytes = &(data_bytes.as_slice()[0 .. data_bytes.len()-1]);
-    let expected_checksum = *data_bytes.last().unwrap();
+    let expected_checksum = data_bytes.pop().unwrap();
+    let validated_region_bytes = data_bytes.as_slice();
     let checksum = checksum(validated_region_bytes);
 
     // The read is failed if the checksum does not match.
@@ -231,10 +231,8 @@ impl Record {
 }
 
 pub struct Reader<'a> {
-  /// Input string.
-  input:  &'a str,
-  /// Current offset into the input string, in bytes.
-  offset: usize,
+  /// Iterator over distinct lines of the input regardless of line ending.
+  line_iterator: str::Lines<'a>,
   /// Reading may complete before the line iterator.
   finished: bool,
   /// A flag indicating that iteration should stop on first failure.
@@ -253,8 +251,7 @@ impl<'a> Reader<'a> {
   ///
   pub fn new_stopping_after_error_and_eof(string: &'a str, stop_after_first_error: bool, stop_after_eof: bool) -> Self {
     Reader {
-      input: string,
-      offset: 0,
+      line_iterator: string.lines(),
       finished: false,
       stop_after_first_error: stop_after_first_error,
       stop_after_eof: stop_after_eof
@@ -274,15 +271,17 @@ impl<'a> Reader<'a> {
   /// It will return either the next record string to be read, or None if nothing is left to process.
   ///
   fn next_record(&mut self) -> Option<&'a str> {
-    if self.offset >= self.input.len() {
-      return None;
+    let mut result = None;
+
+    // Locate the first non-empty line.
+    while let Some(line) = self.line_iterator.next() {
+      if line.len() > 0 {
+        result = Some(line);
+        break;
+      }
     }
     
-    self.input[self.offset .. ]
-      .split('\n')
-      .inspect(|&x| self.offset += x.as_bytes().len() + '\n'.len_utf8())
-      .skip_while(|x| x.len() == 0)
-      .next()
+    return result;
   }
 
 }
