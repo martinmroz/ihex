@@ -77,8 +77,7 @@ mod char_counts {
     /// The smallest record (excluding start code) is Byte Count + Address + Record Type + Checksum.
     pub const SMALLEST_RECORD_EXCLUDING_START_CODE: usize = (1 + 2 + 1 + 1) * 2;
     /// The smallest record (excluding start code) {Smallest} + a 255 byte payload region.
-    pub const LARGEST_RECORD_EXCLUDING_START_CODE: usize =
-        SMALLEST_RECORD_EXCLUDING_START_CODE + (255 * 2);
+    pub const LARGEST_RECORD_EXCLUDING_START_CODE: usize = (1 + 2 + 1 + 255 + 1) * 2;
 }
 
 mod payload_sizes {
@@ -116,7 +115,7 @@ impl Record {
         let data_poriton_length = data_portion.chars().count();
 
         // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
-        if data_portion.chars().all(|character| character.is_digit(16)) == false {
+        if data_portion.chars().all(|character| character.is_ascii_hexdigit()) == false {
             return Err(ReaderError::ContainsInvalidCharacters);
         }
 
