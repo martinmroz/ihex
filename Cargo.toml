@@ -1,5 +1,5 @@
 [package]
-version = "1.0.1"
+version = "1.0.2"
 
 name = "ihex"
 authors = ["Martin Mroz <martinmroz@gmail.com>"]
@@ -9,6 +9,6 @@ repository = "http://github.com/martinmroz/ihex"
 documentation = "http://martinmroz.github.io/ihex"
 readme = "README.md"
 keywords = ["ihex", "intel", "hex"]
-license = "MIT"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
