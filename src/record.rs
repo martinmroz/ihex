@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub enum Record {
     /// Specifies a 16-bit offset address and up to 255 bytes of data.
     /// Availability: I8HEX, I16HEX and I32HEX.
@@ -67,15 +67,12 @@ impl Record {
    */
     pub fn record_type(&self) -> u8 {
         match self {
-            &Record::Data {
-                offset: _,
-                value: _,
-            } => types::DATA,
+            &Record::Data { .. } => types::DATA,
             &Record::EndOfFile => types::END_OF_FILE,
-            &Record::ExtendedSegmentAddress(_) => types::EXTENDED_SEGMENT_ADDRESS,
-            &Record::StartSegmentAddress { cs: _, ip: _ } => types::START_SEGMENT_ADDRESS,
-            &Record::ExtendedLinearAddress(_) => types::EXTENDED_LINEAR_ADDRESS,
-            &Record::StartLinearAddress(_) => types::START_LINEAR_ADDRESS,
+            &Record::ExtendedSegmentAddress(..) => types::EXTENDED_SEGMENT_ADDRESS,
+            &Record::StartSegmentAddress { .. } => types::START_SEGMENT_ADDRESS,
+            &Record::ExtendedLinearAddress(..) => types::EXTENDED_LINEAR_ADDRESS,
+            &Record::StartLinearAddress(..) => types::START_LINEAR_ADDRESS,
         }
     }
 }

@@ -15,7 +15,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ihex = "1.0"
+ihex = "1.1"
 ```
 
 In addition, and this to your crate root:
@@ -39,9 +39,8 @@ fn main() {
         Record::EndOfFile
     ];
 
-    let result = writer::create_object_file_representation(records);
-    if result.is_ok() {
-        println!("{}", result.unwrap());
+    if let Ok(object) = writer::create_object_file_representation(records) {
+        println!("{}", object);
     }
 }
 ```

@@ -9,12 +9,13 @@
 
 use std::error::Error;
 use std::fmt;
+use std::iter::FusedIterator;
 use std::str;
 
 use checksum::*;
 use record::*;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum ReaderError {
     /// The record provided does not begin with a ':'.
     MissingStartCode,
@@ -38,31 +39,37 @@ pub enum ReaderError {
 
 impl Error for ReaderError {
     fn description(&self) -> &str {
-        match self {
-            &ReaderError::MissingStartCode => "Record does not being with a Start Code (':')",
-            &ReaderError::RecordTooShort => {
-                "Record string is shorter than the smallest valid record"
-            }
-            &ReaderError::RecordTooLong => "Record string is longer than the longest valid record",
-            &ReaderError::RecordNotEvenLength => "Record does not contain a whole number of bytes",
-            &ReaderError::ContainsInvalidCharacters => "Record contains invalid characters",
-            &ReaderError::ChecksumMismatch(_, _) => "The checksum for the record does not match",
-            &ReaderError::PayloadLengthMismatch => {
-                "The length of the payload does not match the length field"
-            }
-            &ReaderError::UnsupportedRecordType(_) => {
-                "The record specifies an unsupported IHEX record type"
-            }
-            &ReaderError::InvalidLengthForType => {
-                "The payload length is invalid for the IHEX record type"
-            }
-        }
+        "IHEX reader error"
     }
 }
 
 impl fmt::Display for ReaderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to parse IHEX record: {}.", self.description())
+        match self {
+            &ReaderError::MissingStartCode => write!(f, "missing start code ':'"),
+            &ReaderError::RecordTooShort => write!(f, "too short"),
+            &ReaderError::RecordTooLong => write!(f, "too long"),
+            &ReaderError::RecordNotEvenLength => {
+                write!(f, "record does not contain a whole number of bytes")
+            }
+            &ReaderError::ContainsInvalidCharacters => {
+                write!(f, "invalid characters encountered in record")
+            }
+            &ReaderError::ChecksumMismatch(found, expecting) => write!(
+                f,
+                "invalid checksum '{:02X}', expecting '{:02X}'",
+                found, expecting,
+            ),
+            &ReaderError::PayloadLengthMismatch => {
+                write!(f, "payload length does not match record")
+            }
+            &ReaderError::UnsupportedRecordType(record_type) => {
+                write!(f, "unsupported IHEX record type '{:02X}'", record_type)
+            }
+            &ReaderError::InvalidLengthForType => {
+                write!(f, "payload length invalid for record type")
+            }
+        }
     }
 }
 
@@ -239,6 +246,13 @@ impl Record {
     }
 }
 
+impl str::FromStr for Record {
+    type Err = ReaderError;
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        Record::from_record_string(input)
+    }
+}
+
 pub struct Reader<'a> {
     /// Iterator over distinct lines of the input regardless of line ending.
     line_iterator: str::Lines<'a>,
@@ -316,7 +330,7 @@ impl<'a> Iterator for Reader<'a> {
             }
 
             Some(line) => {
-                let parse_result = Record::from_record_string(line);
+                let parse_result = str::parse::<Record>(line);
 
                 // Check if iteration should end after a parse failure.
                 if let Err(_) = parse_result {
@@ -337,3 +351,5 @@ impl<'a> Iterator for Reader<'a> {
         }
     }
 }
+
+impl<'a> FusedIterator for Reader<'a> {}

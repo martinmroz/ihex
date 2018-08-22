@@ -9,11 +9,12 @@
 
 use std::error::Error;
 use std::fmt;
+use std::fmt::Write;
 
 use checksum::*;
 use record::*;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum WriterError {
     /// A record contains data too large to represent.
     DataExceedsMaximumLength(usize),
@@ -25,23 +26,23 @@ pub enum WriterError {
 
 impl Error for WriterError {
     fn description(&self) -> &str {
-        match self {
-            &WriterError::DataExceedsMaximumLength(_) => {
-                "Record contains data exceeding 255 bytes."
-            }
-            &WriterError::MissingEndOfFileRecord => {
-                "Object files must end with an End of File Record."
-            }
-            &WriterError::MultipleEndOfFileRecords(_) => {
-                "Object files must contain exactle one End of File record."
-            }
-        }
+        "IHEX writer error"
     }
 }
 
 impl fmt::Display for WriterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to generate IHEX record: {}.", self.description())
+        match self {
+            &WriterError::DataExceedsMaximumLength(bytes) => {
+                write!(f, "record has {} bytes (max 255)", bytes)
+            }
+            &WriterError::MissingEndOfFileRecord => {
+                write!(f, "object is missing end of file record")
+            }
+            &WriterError::MultipleEndOfFileRecords(eofs) => {
+                write!(f, "object contains {} end of file records", eofs)
+            }
+        }
     }
 }
 
@@ -136,15 +137,12 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, W
 
     // Construct the record.
     result.push(':');
-    let record_string = data_region
-        .iter()
-        .map(|&byte| format!("{:02X}", byte))
-        .fold(result, |mut acc, ref byte_string| {
-            acc.push_str(byte_string);
-            acc
-        });
 
-    Ok(record_string)
+    for byte in data_region.iter() {
+        write!(&mut result, "{:02X}", byte).unwrap();
+    }
+
+    Ok(result)
 }
 
 ///
