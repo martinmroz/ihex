@@ -1,5 +1,7 @@
-ihex
-====
+Intel HEX (IHEX) Library
+========================
+
+* [Documentation](https://martinmroz.github.io/ihex/master/ihex/)
 
 A Rust library for parsing and generating [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) 
 (or IHEX) objects. This format is commonly used for representing compiled program code
