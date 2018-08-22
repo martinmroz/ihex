@@ -9,6 +9,7 @@
 
 use std::error::Error;
 use std::fmt;
+use std::fmt::Write;
 
 use checksum::*;
 use record::*;
@@ -136,15 +137,12 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, W
 
     // Construct the record.
     result.push(':');
-    let record_string = data_region
-        .iter()
-        .map(|&byte| format!("{:02X}", byte))
-        .fold(result, |mut acc, ref byte_string| {
-            acc.push_str(byte_string);
-            acc
-        });
 
-    Ok(record_string)
+    for byte in data_region.iter() {
+        write!(&mut result, "{:02X}", byte).unwrap();
+    }
+
+    Ok(result)
 }
 
 ///
