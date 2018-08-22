@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["checksum","Computes the Intel HEX checksum of `data`. This is done by summing all the bytes `data and taking the two's complement of the least significant byte of the sum."]]});

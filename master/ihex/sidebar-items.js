@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["checksum","Function for computing IHEX checksum."],["reader","Operations for parsing IHEX records and object files."],["record","An Intel HEX record type."],["writer","Operations for generating IHEX records and object files."]]});
