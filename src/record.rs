@@ -7,7 +7,9 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+use std::fmt;
+
+#[derive(PartialEq, Eq, Debug, Clone, Hash)]
 pub enum Record {
     /// Specifies a 16-bit offset address and up to 255 bytes of data.
     /// Availability: I8HEX, I16HEX and I32HEX.
@@ -63,8 +65,8 @@ pub mod types {
 
 impl Record {
     /**
-   Returns the record type specifier corresponding to the receiver.
-   */
+    Returns the record type specifier corresponding to the receiver.
+    */
     pub fn record_type(&self) -> u8 {
         match self {
             &Record::Data { .. } => types::DATA,
@@ -73,6 +75,19 @@ impl Record {
             &Record::StartSegmentAddress { .. } => types::START_SEGMENT_ADDRESS,
             &Record::ExtendedLinearAddress(..) => types::EXTENDED_LINEAR_ADDRESS,
             &Record::StartLinearAddress(..) => types::START_LINEAR_ADDRESS,
+        }
+    }
+}
+
+impl fmt::Display for Record {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &*self {
+            Record::Data { offset, value } => write!(f, "{}, {:?}", offset, value),
+            Record::EndOfFile => write!(f, "EndOfFile"),
+            Record::ExtendedSegmentAddress(address) => write!(f, "{}", address),
+            Record::StartSegmentAddress { cs, ip } => write!(f, "{}, {}", cs, ip),
+            Record::ExtendedLinearAddress(address) => write!(f, "{}", address),
+            Record::StartLinearAddress(address) => write!(f, "{}", address),
         }
     }
 }
@@ -105,5 +120,4 @@ mod tests {
         let start_linear_address_record = Record::StartLinearAddress(0);
         assert_eq!(start_linear_address_record.record_type(), 0x05);
     }
-
 }
