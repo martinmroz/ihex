@@ -81,13 +81,13 @@ impl Record {
 
 impl fmt::Display for Record {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &*self {
-            Record::Data { offset, value } => write!(f, "{}, {:?}", offset, value),
-            Record::EndOfFile => write!(f, "EndOfFile"),
-            Record::ExtendedSegmentAddress(address) => write!(f, "{}", address),
-            Record::StartSegmentAddress { cs, ip } => write!(f, "{}, {}", cs, ip),
-            Record::ExtendedLinearAddress(address) => write!(f, "{}", address),
-            Record::StartLinearAddress(address) => write!(f, "{}", address),
+        match &self {
+            &Record::Data { offset, value } => write!(f, "{}, {:?}", offset, value),
+            &Record::EndOfFile => write!(f, "EndOfFile"),
+            &Record::ExtendedSegmentAddress(address) => write!(f, "{}", address),
+            &Record::StartSegmentAddress { cs, ip } => write!(f, "{}, {}", cs, ip),
+            &Record::ExtendedLinearAddress(address) => write!(f, "{}", address),
+            &Record::StartLinearAddress(address) => write!(f, "{}", address),
         }
     }
 }
@@ -119,5 +119,24 @@ mod tests {
 
         let start_linear_address_record = Record::StartLinearAddress(0);
         assert_eq!(start_linear_address_record.record_type(), 0x05);
+    }
+
+    fn test_display() {
+        let data_record = Record::Data {
+            offset: 20u16,
+            value: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        };
+        let eof_record = Record::EndOfFile;
+        let extended_segment_address_record = Record::ExtendedSegmentAddress(0);
+        let start_segment_address_record = Record::StartSegmentAddress { cs: 0, ip: 0 };
+        let extended_linear_address_record = Record::ExtendedLinearAddress(0);
+        let start_linear_address_record = Record::StartLinearAddress(0);
+
+        assert_eq!(format!("{}", data_record), "Data { offset: 0x14, value: [0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0x10] }");
+        assert_eq!(format!("{}", eof_record), "");
+        assert_eq!(format!("{}", extended_segment_address_record), "");
+        assert_eq!(format!("{}", start_segment_address_record), "");
+        assert_eq!(format!("{}", extended_linear_address_record), "");
+        assert_eq!(format!("{}", start_linear_address_record), "");
     }
 }
