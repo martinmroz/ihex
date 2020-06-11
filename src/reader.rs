@@ -201,7 +201,7 @@ impl Record {
                         let cs = cs_hi | cs_lo;
                         let ip = ip_hi | ip_lo;
 
-                        Ok(Record::StartSegmentAddress { cs: cs, ip: ip })
+                        Ok(Record::StartSegmentAddress { cs, ip })
                     }
 
                     _ => Err(ReaderError::InvalidLengthForType),
@@ -278,8 +278,8 @@ impl<'a> Reader<'a> {
         Reader {
             line_iterator: string.lines(),
             finished: false,
-            stop_after_first_error: stop_after_first_error,
-            stop_after_eof: stop_after_eof,
+            stop_after_first_error,
+            stop_after_eof,
         }
     }
 
@@ -306,7 +306,7 @@ impl<'a> Reader<'a> {
             }
         }
 
-        return result;
+        result
     }
 }
 

@@ -91,10 +91,10 @@ impl Record {
                 self.record_type(),
                 0x0000,
                 &[
-                    ((address & 0xFF000000) >> 24) as u8,
-                    ((address & 0x00FF0000) >> 16) as u8,
-                    ((address & 0x0000FF00) >> 8) as u8,
-                    ((address & 0x000000FF) >> 0) as u8,
+                    ((address & 0xFF00_0000) >> 24) as u8,
+                    ((address & 0x00FF_0000) >> 16) as u8,
+                    ((address & 0x0000_FF00) >> 8) as u8,
+                    ((address & 0x0000_00FF) >> 0) as u8,
                 ],
             ),
         }

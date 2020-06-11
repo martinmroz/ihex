@@ -15,8 +15,7 @@ pub fn checksum(data: &[u8]) -> u8 {
     let sum: u8 = data.iter()
         .fold(0, |acc, &value| acc.wrapping_add(value as u8));
 
-    let checksum = (0 as u8).wrapping_sub(sum);
-    checksum
+    (0 as u8).wrapping_sub(sum)
 }
 
 #[cfg(test)]
