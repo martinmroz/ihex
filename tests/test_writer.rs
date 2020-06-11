@@ -19,7 +19,7 @@ fn test_record_to_string_for_data_record() {
         value: vec![],
     };
     assert_eq!(
-        empty_data_record.to_string(),
+        empty_data_record.to_hex_string(),
         Ok(String::from(":0000000000"))
     );
 
@@ -31,7 +31,7 @@ fn test_record_to_string_for_data_record() {
         value: data,
     };
     assert_eq!(
-        populated_data_record.to_string(),
+        populated_data_record.to_hex_string(),
         Ok(String::from(":0B0010006164647265737320676170A7"))
     );
 
@@ -41,7 +41,7 @@ fn test_record_to_string_for_data_record() {
         offset: 0x0000,
         value: max_length_data,
     };
-    assert_eq!(max_length_data_record.to_string().is_ok(), true);
+    assert_eq!(max_length_data_record.to_hex_string().is_ok(), true);
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn test_record_to_string_for_data_record_with_invalid_data() {
         value: invalid_data,
     };
     assert_eq!(
-        invalid_data_record.to_string(),
+        invalid_data_record.to_hex_string(),
         Err(WriterError::DataExceedsMaximumLength(256))
     );
 }
@@ -60,20 +60,20 @@ fn test_record_to_string_for_data_record_with_invalid_data() {
 #[test]
 fn test_record_to_string_for_eof_record() {
     let eof_record = Record::EndOfFile;
-    assert_eq!(eof_record.to_string(), Ok(String::from(":00000001FF")));
+    assert_eq!(eof_record.to_hex_string(), Ok(String::from(":00000001FF")));
 }
 
 #[test]
 fn test_record_to_string_for_esa_record() {
     let esa_record_1 = Record::ExtendedSegmentAddress(0x1200);
     assert_eq!(
-        esa_record_1.to_string(),
+        esa_record_1.to_hex_string(),
         Ok(String::from(":020000021200EA"))
     );
 
     let esa_record_2 = Record::ExtendedSegmentAddress(0x55AA);
     assert_eq!(
-        esa_record_2.to_string(),
+        esa_record_2.to_hex_string(),
         Ok(String::from(":0200000255AAFD"))
     );
 }
@@ -85,7 +85,7 @@ fn test_record_to_string_for_ssa_record() {
         ip: 0x3801,
     };
     assert_eq!(
-        ssa_record_1.to_string(),
+        ssa_record_1.to_hex_string(),
         Ok(String::from(":0400000301103801AF"))
     );
 
@@ -94,7 +94,7 @@ fn test_record_to_string_for_ssa_record() {
         ip: 0x3800,
     };
     assert_eq!(
-        ssa_record_2.to_string(),
+        ssa_record_2.to_hex_string(),
         Ok(String::from(":0400000300003800C1"))
     );
 }
@@ -103,13 +103,13 @@ fn test_record_to_string_for_ssa_record() {
 fn test_record_to_string_for_ela_record() {
     let ela_record_1 = Record::ExtendedLinearAddress(0xFFFF);
     assert_eq!(
-        ela_record_1.to_string(),
+        ela_record_1.to_hex_string(),
         Ok(String::from(":02000004FFFFFC"))
     );
 
     let ela_record_2 = Record::ExtendedLinearAddress(0x0F55);
     assert_eq!(
-        ela_record_2.to_string(),
+        ela_record_2.to_hex_string(),
         Ok(String::from(":020000040F5596"))
     );
 }
@@ -118,13 +118,13 @@ fn test_record_to_string_for_ela_record() {
 fn test_record_to_string_for_sla_record() {
     let sla_record_1 = Record::StartLinearAddress(0x000000CD);
     assert_eq!(
-        sla_record_1.to_string(),
+        sla_record_1.to_hex_string(),
         Ok(String::from(":04000005000000CD2A"))
     );
 
     let sla_record_2 = Record::StartLinearAddress(0x11223344);
     assert_eq!(
-        sla_record_2.to_string(),
+        sla_record_2.to_hex_string(),
         Ok(String::from(":04000005112233444D"))
     );
 }

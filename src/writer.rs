@@ -50,7 +50,7 @@ impl Record {
     ///
     /// Returns the IHEX record representation of the receiver, or an error on failure.
     ///
-    pub fn to_string(&self) -> Result<String, WriterError> {
+    pub fn to_hex_string(&self) -> Result<String, WriterError> {
         match self {
             &Record::Data { offset, ref value } => {
                 format_record(self.record_type(), offset, value.as_slice())
@@ -186,9 +186,9 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
         return Err(WriterError::MultipleEndOfFileRecords(eof_record_count));
     }
 
-    Ok(records
+    records
         .iter()
-        .map(|ref record| record.to_string())
-        .collect::<Vec<String>>()
-        .join("\n"))
+        .map(|ref record| record.to_hex_string())
+        .collect::<Result<Vec<String>, WriterError>>()
+        .map(|list| list.join("\n"))
 }

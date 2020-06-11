@@ -67,12 +67,12 @@ impl Record {
 impl fmt::Display for Record {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            &Record::Data { offset, value } => write!(f, "Data {{ offset: {}, values : {:?} }}", offset, value),
+            &Record::Data { offset, value } => write!(f, "Data {{ offset: {:#X}, value: {:?} }}", offset, value),
             &Record::EndOfFile => write!(f, "EndOfFile"),
-            &Record::ExtendedSegmentAddress(address) => write!(f, "{}", address),
-            &Record::StartSegmentAddress { cs, ip } => write!(f, "{}, {}", cs, ip),
-            &Record::ExtendedLinearAddress(address) => write!(f, "{}", address),
-            &Record::StartLinearAddress(address) => write!(f, "{}", address),
+            &Record::ExtendedSegmentAddress(address) => write!(f, "ExtendedSegmentAddress: {:#X}", address),
+            &Record::StartSegmentAddress { cs, ip } => write!(f, "StartSegmentAddress {{ CS: {:#X}, IP: {:#X} }}", cs, ip),
+            &Record::ExtendedLinearAddress(address) => write!(f, "ExtendedLinearAddress: {:#X}", address),
+            &Record::StartLinearAddress(address) => write!(f, "StartLinearAddress: {:#X}", address),
         }
     }
 }
@@ -128,16 +128,16 @@ mod tests {
             value: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         };
         let eof_record = Record::EndOfFile;
-        let extended_segment_address_record = Record::ExtendedSegmentAddress(0);
-        let start_segment_address_record = Record::StartSegmentAddress { cs: 0, ip: 0 };
-        let extended_linear_address_record = Record::ExtendedLinearAddress(0);
-        let start_linear_address_record = Record::StartLinearAddress(0);
+        let extended_segment_address_record = Record::ExtendedSegmentAddress(0x900);
+        let start_segment_address_record = Record::StartSegmentAddress { cs: 0x30, ip: 0x108 };
+        let extended_linear_address_record = Record::ExtendedLinearAddress(0x738);
+        let start_linear_address_record = Record::StartLinearAddress(0x893);
 
-        assert_eq!(format!("{}", data_record), "Data { offset: 0x14, value: [0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0x10] }");
-        assert_eq!(format!("{}", eof_record), "");
-        assert_eq!(format!("{}", extended_segment_address_record), "");
-        assert_eq!(format!("{}", start_segment_address_record), "");
-        assert_eq!(format!("{}", extended_linear_address_record), "");
-        assert_eq!(format!("{}", start_linear_address_record), "");
+        assert_eq!(format!("{}", data_record), "Data { offset: 0x14, value: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] }");
+        assert_eq!(format!("{}", eof_record), "EndOfFile");
+        assert_eq!(format!("{}", extended_segment_address_record), "ExtendedSegmentAddress: 0x900");
+        assert_eq!(format!("{}", start_segment_address_record), "StartSegmentAddress { CS: 0x30, IP: 0x108 }");
+        assert_eq!(format!("{}", extended_linear_address_record), "ExtendedLinearAddress: 0x738");
+        assert_eq!(format!("{}", start_linear_address_record), "StartLinearAddress: 0x893");
     }
 }
