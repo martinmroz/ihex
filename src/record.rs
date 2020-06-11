@@ -48,21 +48,6 @@ pub enum Record {
     StartLinearAddress(u32),
 }
 
-pub mod types {
-    /// Type specifier for a Data record.
-    pub const DATA: u8 = 0x00;
-    /// Type specifier for an End-Of-File record.
-    pub const END_OF_FILE: u8 = 0x01;
-    /// Type specifier for an Extended Segment Address record.
-    pub const EXTENDED_SEGMENT_ADDRESS: u8 = 0x02;
-    /// Type specifier for a Start Segment Address record.
-    pub const START_SEGMENT_ADDRESS: u8 = 0x03;
-    /// Type specifier for an Extended Linear Address record.
-    pub const EXTENDED_LINEAR_ADDRESS: u8 = 0x04;
-    /// Type specifier for a Start Linear Address record.
-    pub const START_LINEAR_ADDRESS: u8 = 0x05;
-}
-
 impl Record {
     /**
     Returns the record type specifier corresponding to the receiver.
@@ -82,7 +67,7 @@ impl Record {
 impl fmt::Display for Record {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            &Record::Data { offset, value } => write!(f, "{}, {:?}", offset, value),
+            &Record::Data { offset, value } => write!(f, "Data {{ offset: {}, values : {:?} }}", offset, value),
             &Record::EndOfFile => write!(f, "EndOfFile"),
             &Record::ExtendedSegmentAddress(address) => write!(f, "{}", address),
             &Record::StartSegmentAddress { cs, ip } => write!(f, "{}, {}", cs, ip),
@@ -90,6 +75,21 @@ impl fmt::Display for Record {
             &Record::StartLinearAddress(address) => write!(f, "{}", address),
         }
     }
+}
+
+pub mod types {
+    /// Type specifier for a Data record.
+    pub const DATA: u8 = 0x00;
+    /// Type specifier for an End-Of-File record.
+    pub const END_OF_FILE: u8 = 0x01;
+    /// Type specifier for an Extended Segment Address record.
+    pub const EXTENDED_SEGMENT_ADDRESS: u8 = 0x02;
+    /// Type specifier for a Start Segment Address record.
+    pub const START_SEGMENT_ADDRESS: u8 = 0x03;
+    /// Type specifier for an Extended Linear Address record.
+    pub const EXTENDED_LINEAR_ADDRESS: u8 = 0x04;
+    /// Type specifier for a Start Linear Address record.
+    pub const START_LINEAR_ADDRESS: u8 = 0x05;
 }
 
 #[cfg(test)]
@@ -121,6 +121,7 @@ mod tests {
         assert_eq!(start_linear_address_record.record_type(), 0x05);
     }
 
+    #[test]
     fn test_display() {
         let data_record = Record::Data {
             offset: 20u16,

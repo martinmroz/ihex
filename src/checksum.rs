@@ -12,10 +12,10 @@
  and taking the two's complement of the least significant byte of the sum.
  */
 pub fn checksum(data: &[u8]) -> u8 {
-    let sum: u8 = data.iter()
-        .fold(0, |acc, &value| acc.wrapping_add(value as u8));
-
-    (0 as u8).wrapping_sub(sum)
+    (0 as u8).wrapping_sub(
+        data.iter()
+        .fold(0, |acc, &value| acc.wrapping_add(value as u8)
+    ))
 }
 
 #[cfg(test)]

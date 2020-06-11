@@ -186,9 +186,9 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
         return Err(WriterError::MultipleEndOfFileRecords(eof_record_count));
     }
 
-    records
+    Ok(records
         .iter()
         .map(|ref record| record.to_string())
-        .collect::<Result<Vec<String>, WriterError>>()
-        .map(|list| list.join("\n"))
+        .collect::<Vec<String>>()
+        .join("\n"))
 }
