@@ -43,7 +43,7 @@ fn test_record_from_record_string_rejects_long_records() {
         offset: 0x0010,
         value: longest_valid_data,
     };
-    let longest_valid_string = longest_valid_data_record.to_string().unwrap();
+    let longest_valid_string = longest_valid_data_record.to_hex_string().unwrap();
     let shortest_invalid_string = longest_valid_string.clone() + &"0";
 
     assert_eq!(longest_valid_string.len(), 521);
