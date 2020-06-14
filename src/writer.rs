@@ -11,8 +11,8 @@ use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
 
-use checksum::*;
-use record::*;
+use crate::checksum::checksum;
+use crate::record::Record;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum WriterError {
@@ -22,25 +22,26 @@ pub enum WriterError {
     MissingEndOfFileRecord,
     /// Object contains multiple EoF records.
     MultipleEndOfFileRecords(usize),
+    /// Unable to synthesize record string.
+    SynthesisFailed,
 }
 
-impl Error for WriterError {
-    fn description(&self) -> &str {
-        "IHEX writer error"
-    }
-}
+impl Error for WriterError {}
 
 impl fmt::Display for WriterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &WriterError::DataExceedsMaximumLength(bytes) => {
+            WriterError::DataExceedsMaximumLength(bytes) => {
                 write!(f, "record has {} bytes (max 255)", bytes)
             }
-            &WriterError::MissingEndOfFileRecord => {
+            WriterError::MissingEndOfFileRecord => {
                 write!(f, "object is missing end of file record")
             }
-            &WriterError::MultipleEndOfFileRecords(eofs) => {
+            WriterError::MultipleEndOfFileRecords(eofs) => {
                 write!(f, "object contains {} end of file records", eofs)
+            }
+            WriterError::SynthesisFailed => {
+                write!(f, "unable to write string representation of record")
             }
         }
     }
@@ -52,49 +53,47 @@ impl Record {
     ///
     pub fn to_hex_string(&self) -> Result<String, WriterError> {
         match self {
-            &Record::Data { offset, ref value } => {
-                format_record(self.record_type(), offset, value.as_slice())
-            }
+            Record::Data { offset, value } => format_record(self.record_type(), *offset, value),
 
-            &Record::EndOfFile => format_record(self.record_type(), 0x0000, &[]),
+            Record::EndOfFile => format_record(self.record_type(), 0x0000, &[]),
 
-            &Record::ExtendedSegmentAddress(address) => format_record(
+            Record::ExtendedSegmentAddress(segment_address) => format_record(
                 self.record_type(),
                 0x0000,
                 &[
-                    ((address & 0xFF00) >> 8) as u8,
-                    ((address & 0x00FF) >> 0) as u8,
+                    ((segment_address & 0xFF00) >> 8) as u8,
+                    (segment_address & 0x00FF) as u8,
                 ],
             ),
 
-            &Record::StartSegmentAddress { cs, ip } => format_record(
+            Record::StartSegmentAddress { cs, ip } => format_record(
                 self.record_type(),
                 0x0000,
                 &[
                     ((cs & 0xFF00) >> 8) as u8,
-                    ((cs & 0x00FF) >> 0) as u8,
+                    (cs & 0x00FF) as u8,
                     ((ip & 0xFF00) >> 8) as u8,
-                    ((ip & 0x00FF) >> 0) as u8,
+                    (ip & 0x00FF) as u8,
                 ],
             ),
 
-            &Record::ExtendedLinearAddress(address) => format_record(
+            Record::ExtendedLinearAddress(linear_address) => format_record(
                 self.record_type(),
                 0x0000,
                 &[
-                    ((address & 0xFF00) >> 8) as u8,
-                    ((address & 0x00FF) >> 0) as u8,
+                    ((linear_address & 0xFF00) >> 8) as u8,
+                    (linear_address & 0x00FF) as u8,
                 ],
             ),
 
-            &Record::StartLinearAddress(address) => format_record(
+            Record::StartLinearAddress(address) => format_record(
                 self.record_type(),
                 0x0000,
                 &[
                     ((address & 0xFF00_0000) >> 24) as u8,
                     ((address & 0x00FF_0000) >> 16) as u8,
                     ((address & 0x0000_FF00) >> 8) as u8,
-                    ((address & 0x0000_00FF) >> 0) as u8,
+                    (address & 0x0000_00FF) as u8,
                 ],
             ),
         }
@@ -111,7 +110,11 @@ impl Record {
 /// This method returns a formatted IHEX record on success with the specified
 /// `record_type`, `address` and `data` values. On failure, an error is returned.
 ///
-fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, WriterError> {
+fn format_record<T>(record_type: u8, address: u16, input: T) -> Result<String, WriterError>
+where
+    T: AsRef<[u8]>,
+{
+    let data = input.as_ref();
     if data.len() > 0xFF {
         return Err(WriterError::DataExceedsMaximumLength(data.len()));
     }
@@ -123,7 +126,7 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, W
     // Build the record (excluding start code) up to the checksum.
     data_region.push(data.len() as u8);
     data_region.push(((address & 0xFF00) >> 8) as u8);
-    data_region.push(((address & 0x00FF) >> 0) as u8);
+    data_region.push((address & 0x00FF) as u8);
     data_region.push(record_type);
     data_region.extend_from_slice(data);
 
@@ -137,12 +140,11 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, W
 
     // Construct the record.
     result.push(':');
-
-    for byte in data_region.iter() {
-        write!(&mut result, "{:02X}", byte).unwrap();
-    }
-
-    Ok(result)
+    data_region.iter().try_fold(result, |mut acc, byte| {
+        write!(&mut acc, "{:02X}", byte)
+            .map_err(|_| WriterError::SynthesisFailed)
+            .map(|_| acc)
+    })
 }
 
 ///
@@ -154,19 +156,18 @@ fn format_record(record_type: u8, address: u16, data: &[u8]) -> Result<String, W
 /// # Example
 ///
 /// ```rust
-/// use ihex::record::Record;
-/// use ihex::writer;
+/// use ihex::Record;
 ///
 /// let records = &[
 ///   Record::Data { offset: 0x0010, value: vec![0x48,0x65,0x6C,0x6C,0x6F] },
 ///   Record::EndOfFile
 /// ];
 ///
-/// let result = writer::create_object_file_representation(records);
+/// let result = ihex::create_object_file_representation(records).unwrap();
 /// ```
 ///
 pub fn create_object_file_representation(records: &[Record]) -> Result<String, WriterError> {
-    if let Some(&Record::EndOfFile) = records.last() {
+    if let Some(Record::EndOfFile) = records.last() {
     } else {
         return Err(WriterError::MissingEndOfFileRecord);
     }
@@ -174,8 +175,8 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
     // Validate exactly one EoF record exists.
     let eof_record_count = records
         .iter()
-        .filter(|&x| {
-            if let &Record::EndOfFile = x {
+        .filter(|x| {
+            if let Record::EndOfFile = x {
                 true
             } else {
                 false
@@ -186,9 +187,9 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
         return Err(WriterError::MultipleEndOfFileRecords(eof_record_count));
     }
 
-    records
-        .iter()
-        .map(|ref record| record.to_hex_string())
-        .collect::<Result<Vec<String>, WriterError>>()
-        .map(|list| list.join("\n"))
+    records.iter().try_fold(String::new(), |mut acc, record| {
+        acc.push_str(&record.to_hex_string()?);
+        acc.push_str("\n");
+        Ok(acc)
+    })
 }

@@ -7,10 +7,7 @@
 // distributed except according to those terms.
 //
 
-extern crate ihex;
-
-use ihex::record::Record;
-use ihex::writer::*;
+use ihex::*;
 
 #[test]
 fn test_record_to_string_for_data_record() {
@@ -167,7 +164,7 @@ fn test_create_object_file_representation_with_multiple_eof_records() {
 #[test]
 fn test_create_object_file_representation_eof_only() {
     let records = &[Record::EndOfFile];
-    let expected_result = String::from(":00000001FF");
+    let expected_result = String::from(":00000001FF\n");
     assert_eq!(
         create_object_file_representation(records),
         Ok(expected_result)
@@ -199,7 +196,7 @@ fn test_create_object_file_representation_all_types() {
         + &":0400000300003800C1\n"
         + &":02000004FFFFFC\n"
         + &":04000005000000CD2A\n"
-        + &":00000001FF";
+        + &":00000001FF\n";
 
     assert_eq!(
         create_object_file_representation(records),

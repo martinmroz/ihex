@@ -12,8 +12,8 @@ use std::fmt;
 use std::iter::FusedIterator;
 use std::str;
 
-use checksum::*;
-use record::*;
+use crate::checksum::checksum;
+use crate::record::{types, Record};
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum ReaderError {
@@ -37,36 +37,32 @@ pub enum ReaderError {
     InvalidLengthForType,
 }
 
-impl Error for ReaderError {
-    fn description(&self) -> &str {
-        "IHEX reader error"
-    }
-}
+impl Error for ReaderError {}
 
 impl fmt::Display for ReaderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &ReaderError::MissingStartCode => write!(f, "missing start code ':'"),
-            &ReaderError::RecordTooShort => write!(f, "too short"),
-            &ReaderError::RecordTooLong => write!(f, "too long"),
-            &ReaderError::RecordNotEvenLength => {
+            ReaderError::MissingStartCode => write!(f, "missing start code ':'"),
+            ReaderError::RecordTooShort => write!(f, "too short"),
+            ReaderError::RecordTooLong => write!(f, "too long"),
+            ReaderError::RecordNotEvenLength => {
                 write!(f, "record does not contain a whole number of bytes")
             }
-            &ReaderError::ContainsInvalidCharacters => {
+            ReaderError::ContainsInvalidCharacters => {
                 write!(f, "invalid characters encountered in record")
             }
-            &ReaderError::ChecksumMismatch(found, expecting) => write!(
+            ReaderError::ChecksumMismatch(found, expecting) => write!(
                 f,
                 "invalid checksum '{:02X}', expecting '{:02X}'",
                 found, expecting,
             ),
-            &ReaderError::PayloadLengthMismatch => {
-                write!(f, "payload length does not match record")
+            ReaderError::PayloadLengthMismatch => {
+                write!(f, "payload length does not match record header")
             }
-            &ReaderError::UnsupportedRecordType(record_type) => {
+            ReaderError::UnsupportedRecordType(record_type) => {
                 write!(f, "unsupported IHEX record type '{:02X}'", record_type)
             }
-            &ReaderError::InvalidLengthForType => {
+            ReaderError::InvalidLengthForType => {
                 write!(f, "payload length invalid for record type")
             }
         }
@@ -100,9 +96,9 @@ impl Record {
     /// # Examples
     ///
     /// ```rust
-    /// use ihex::record::Record;
+    /// use ihex::Record;
     ///
-    /// let record = Record::from_record_string(":");
+    /// let record = Record::from_record_string(":00000001FF").unwrap();
     /// ```
     ///
     pub fn from_record_string(string: &str) -> Result<Self, ReaderError> {
@@ -115,7 +111,10 @@ impl Record {
         let data_poriton_length = data_portion.chars().count();
 
         // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
-        if data_portion.chars().all(|character| character.is_ascii_hexdigit()) == false {
+        if !data_portion
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+        {
             return Err(ReaderError::ContainsInvalidCharacters);
         }
 
@@ -147,10 +146,11 @@ impl Record {
         }
 
         // Decode header values.
-        let length: u8 = validated_region_bytes[0];
-        let address: u16 =
-            ((validated_region_bytes[1] as u16) << 8) | ((validated_region_bytes[2] as u16) << 0);
-        let record_type: u8 = validated_region_bytes[3];
+        let length = validated_region_bytes[0];
+        let address_hi = (validated_region_bytes[1] as u16) << 8;
+        let address_lo = validated_region_bytes[2] as u16;
+        let address = address_hi | address_lo;
+        let record_type = validated_region_bytes[3];
         let payload_bytes = &validated_region_bytes[4..];
 
         // Validate the length of the record matches what was specified in the header.
@@ -171,6 +171,7 @@ impl Record {
                 // An EoF record has no payload.
                 match payload_bytes.len() {
                     payload_sizes::END_OF_FILE => Ok(Record::EndOfFile),
+
                     _ => Err(ReaderError::InvalidLengthForType),
                 }
             }
@@ -180,7 +181,7 @@ impl Record {
                     payload_sizes::EXTENDED_SEGMENT_ADDRESS => {
                         // The 16-bit extended segment address is encoded big-endian.
                         let address_hi = (payload_bytes[0] as u16) << 8;
-                        let address_lo = (payload_bytes[1] as u16) << 0;
+                        let address_lo = payload_bytes[1] as u16;
                         let address = address_hi | address_lo;
 
                         Ok(Record::ExtendedSegmentAddress(address))
@@ -195,9 +196,9 @@ impl Record {
                     payload_sizes::START_SEGMENT_ADDRESS => {
                         // The CS:IP pair is encoded as two 16-bit big-endian integers.
                         let cs_hi = (payload_bytes[0] as u16) << 8;
-                        let cs_lo = (payload_bytes[1] as u16) << 0;
+                        let cs_lo = payload_bytes[1] as u16;
                         let ip_hi = (payload_bytes[2] as u16) << 8;
-                        let ip_lo = (payload_bytes[3] as u16) << 0;
+                        let ip_lo = payload_bytes[3] as u16;
                         let cs = cs_hi | cs_lo;
                         let ip = ip_hi | ip_lo;
 
@@ -213,7 +214,7 @@ impl Record {
                     payload_sizes::EXTENDED_LINEAR_ADDRESS => {
                         // The upper 16 bits of the linear address are encoded as a 16-bit big-endian integer.
                         let ela_hi = (payload_bytes[0] as u16) << 8;
-                        let ela_lo = (payload_bytes[1] as u16) << 0;
+                        let ela_lo = payload_bytes[1] as u16;
                         let ela = ela_hi | ela_lo;
 
                         Ok(Record::ExtendedLinearAddress(ela))
@@ -230,7 +231,7 @@ impl Record {
                         let sla_4 = (payload_bytes[0] as u32) << 24;
                         let sla_3 = (payload_bytes[1] as u32) << 16;
                         let sla_2 = (payload_bytes[2] as u32) << 8;
-                        let sla_1 = (payload_bytes[3] as u32) << 0;
+                        let sla_1 = payload_bytes[3] as u32;
                         let sla = sla_4 | sla_3 | sla_2 | sla_1;
 
                         Ok(Record::StartLinearAddress(sla))
@@ -252,15 +253,30 @@ impl str::FromStr for Record {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub struct ReaderOptions {
+    /// A flag indicating that iteration should stop on first failure.
+    pub stop_after_first_error: bool,
+    /// A flag indicating that iteration should stop on first EOF record encountered.
+    pub stop_after_eof: bool,
+}
+
+impl Default for ReaderOptions {
+    fn default() -> Self {
+        ReaderOptions {
+            stop_after_first_error: true,
+            stop_after_eof: true,
+        }
+    }
+}
+
 pub struct Reader<'a> {
     /// Iterator over distinct lines of the input regardless of line ending.
     line_iterator: str::Lines<'a>,
     /// Reading may complete before the line iterator.
     finished: bool,
-    /// A flag indicating that iteration should stop on first failure.
-    stop_after_first_error: bool,
-    /// A flag indicating that iteration should stop on first EOF record encountered.
-    stop_after_eof: bool,
+    /// Configuration options.
+    options: ReaderOptions,
 }
 
 impl<'a> Reader<'a> {
@@ -270,16 +286,11 @@ impl<'a> Reader<'a> {
     /// to `next()` return `None`. If `stop_after_eof` is `true` then the first EoF record
     /// will make all subsequent calls to `next()` return `None`.
     ///
-    pub fn new_stopping_after_error_and_eof(
-        string: &'a str,
-        stop_after_first_error: bool,
-        stop_after_eof: bool,
-    ) -> Self {
+    pub fn new_with_options(string: &'a str, options: ReaderOptions) -> Self {
         Reader {
             line_iterator: string.lines(),
             finished: false,
-            stop_after_first_error,
-            stop_after_eof,
+            options,
         }
     }
 
@@ -287,7 +298,7 @@ impl<'a> Reader<'a> {
     /// Creates a new IHEX reader over `string` with default configuration parameters.
     ///
     pub fn new(string: &'a str) -> Self {
-        Reader::new_stopping_after_error_and_eof(string, true, true)
+        Reader::new_with_options(string, Default::default())
     }
 
     ///
@@ -300,7 +311,7 @@ impl<'a> Reader<'a> {
 
         // Locate the first non-empty line.
         while let Some(line) = self.line_iterator.next() {
-            if line.len() > 0 {
+            if !line.is_empty() {
                 result = Some(line);
                 break;
             }
@@ -332,15 +343,13 @@ impl<'a> Iterator for Reader<'a> {
                 let parse_result = str::parse::<Record>(line);
 
                 // Check if iteration should end after a parse failure.
-                if let Err(_) = parse_result {
-                    if self.stop_after_first_error {
-                        self.finished = true;
-                    }
+                if parse_result.is_err() && self.options.stop_after_first_error {
+                    self.finished = true;
                 }
 
                 // Check if iteration should end after an EOF.
                 if let Ok(Record::EndOfFile) = parse_result {
-                    if self.stop_after_eof {
+                    if self.options.stop_after_eof {
                         self.finished = true;
                     }
                 }
