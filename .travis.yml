@@ -39,6 +39,8 @@ script:
 after_success:
   # Measure code coverage and upload to coveralls.io
   - cargo coveralls
+  # Generate documentation
+  - cargo doc --verbose
   # Upload documentation to github.io (gh-pages branch)
   - cargo doc-upload
 
