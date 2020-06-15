@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ihex"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"ihex/struct.ReaderOptions.html\" title=\"struct ihex::ReaderOptions\">ReaderOptions</a>","synthetic":false,"types":["ihex::reader::ReaderOptions"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

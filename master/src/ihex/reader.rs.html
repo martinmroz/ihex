@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/reader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>reader.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/reader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>reader.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../ihex/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -352,7 +352,16 @@
 <span id="352">352</span>
 <span id="353">353</span>
 <span id="354">354</span>
-</pre><pre class="rust ">
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+</pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">//</span>
 <span class="comment">// Copyright 2016 ihex Developers</span>
 <span class="comment">//</span>
@@ -367,8 +376,8 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">FusedIterator</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
 
-<span class="kw">use</span> <span class="ident">checksum</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">record</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">checksum</span>::<span class="ident">checksum</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">record</span>::{<span class="ident">types</span>, <span class="ident">Record</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ReaderError</span> {
@@ -392,36 +401,32 @@
     <span class="ident">InvalidLengthForType</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Error</span> <span class="kw">for</span> <span class="ident">ReaderError</span> {
-    <span class="kw">fn</span> <span class="ident">description</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
-        <span class="string">&quot;IHEX reader error&quot;</span>
-    }
-}
+<span class="kw">impl</span> <span class="ident">Error</span> <span class="kw">for</span> <span class="ident">ReaderError</span> {}
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ReaderError</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">MissingStartCode</span> <span class="op">=&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;missing start code &#39;:&#39;&quot;</span>),
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">RecordTooShort</span> <span class="op">=&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;too short&quot;</span>),
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">RecordTooLong</span> <span class="op">=&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;too long&quot;</span>),
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">RecordNotEvenLength</span> <span class="op">=&gt;</span> {
+            <span class="ident">ReaderError</span>::<span class="ident">MissingStartCode</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;missing start code &#39;:&#39;&quot;</span>),
+            <span class="ident">ReaderError</span>::<span class="ident">RecordTooShort</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;too short&quot;</span>),
+            <span class="ident">ReaderError</span>::<span class="ident">RecordTooLong</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;too long&quot;</span>),
+            <span class="ident">ReaderError</span>::<span class="ident">RecordNotEvenLength</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;record does not contain a whole number of bytes&quot;</span>)
             }
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">ContainsInvalidCharacters</span> <span class="op">=&gt;</span> {
+            <span class="ident">ReaderError</span>::<span class="ident">ContainsInvalidCharacters</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid characters encountered in record&quot;</span>)
             }
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">ChecksumMismatch</span>(<span class="ident">found</span>, <span class="ident">expecting</span>) <span class="op">=&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
+            <span class="ident">ReaderError</span>::<span class="ident">ChecksumMismatch</span>(<span class="ident">found</span>, <span class="ident">expecting</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
                 <span class="ident">f</span>,
                 <span class="string">&quot;invalid checksum &#39;{:02X}&#39;, expecting &#39;{:02X}&#39;&quot;</span>,
                 <span class="ident">found</span>, <span class="ident">expecting</span>,
             ),
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">PayloadLengthMismatch</span> <span class="op">=&gt;</span> {
-                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;payload length does not match record&quot;</span>)
+            <span class="ident">ReaderError</span>::<span class="ident">PayloadLengthMismatch</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;payload length does not match record header&quot;</span>)
             }
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">UnsupportedRecordType</span>(<span class="ident">record_type</span>) <span class="op">=&gt;</span> {
+            <span class="ident">ReaderError</span>::<span class="ident">UnsupportedRecordType</span>(<span class="ident">record_type</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;unsupported IHEX record type &#39;{:02X}&#39;&quot;</span>, <span class="ident">record_type</span>)
             }
-            <span class="kw-2">&amp;</span><span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span> <span class="op">=&gt;</span> {
+            <span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;payload length invalid for record type&quot;</span>)
             }
         }
@@ -455,12 +460,12 @@
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use ihex::record::Record;</span>
+    <span class="doccomment">/// use ihex::Record;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let record = Record::from_record_string(&quot;:&quot;);</span>
+    <span class="doccomment">/// let record = Record::from_record_string(&quot;:00000001FF&quot;).unwrap();</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_record_string</span>(<span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ReaderError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_record_string</span>(<span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ReaderError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="string">&#39;:&#39;</span>) <span class="op">=</span> <span class="ident">string</span>.<span class="ident">chars</span>().<span class="ident">next</span>() {
         } <span class="kw">else</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">MissingStartCode</span>);
@@ -470,7 +475,10 @@
         <span class="kw">let</span> <span class="ident">data_poriton_length</span> <span class="op">=</span> <span class="ident">data_portion</span>.<span class="ident">chars</span>().<span class="ident">count</span>();
 
         <span class="comment">// Validate all characters are hexadecimal before checking the digit counts for more accurate errors.</span>
-        <span class="kw">if</span> <span class="ident">data_portion</span>.<span class="ident">chars</span>().<span class="ident">all</span>(<span class="op">|</span><span class="ident">character</span><span class="op">|</span> <span class="ident">character</span>.<span class="ident">is_ascii_hexdigit</span>()) <span class="op">==</span> <span class="bool-val">false</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">data_portion</span>
+            .<span class="ident">chars</span>()
+            .<span class="ident">all</span>(<span class="op">|</span><span class="ident">character</span><span class="op">|</span> <span class="ident">character</span>.<span class="ident">is_ascii_hexdigit</span>())
+        {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">ContainsInvalidCharacters</span>);
         }
 
@@ -479,7 +487,7 @@
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">RecordTooShort</span>);
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">data_poriton_length</span> <span class="op">&gt;</span> <span class="ident">char_counts</span>::<span class="ident">LARGEST_RECORD_EXCLUDING_START_CODE</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">RecordTooLong</span>);
-        } <span class="kw">else</span> <span class="kw">if</span> (<span class="ident">data_poriton_length</span> <span class="op">%</span> <span class="number">2</span>) <span class="op">!=</span> <span class="number">0</span> {
+        } <span class="kw">else</span> <span class="kw">if</span> (<span class="ident">data_poriton_length</span> <span class="op">%</span> <span class="number">2</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">RecordNotEvenLength</span>);
         }
 
@@ -489,7 +497,7 @@
             .<span class="ident">chunks</span>(<span class="number">2</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">chunk</span><span class="op">|</span> <span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">chunk</span>).<span class="ident">unwrap</span>())
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">byte_str</span><span class="op">|</span> <span class="ident">u8</span>::<span class="ident">from_str_radix</span>(<span class="ident">byte_str</span>, <span class="number">16</span>).<span class="ident">unwrap</span>())
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;&gt;</span>();
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
         <span class="comment">// Compute the checksum.</span>
         <span class="kw">let</span> <span class="ident">expected_checksum</span> <span class="op">=</span> <span class="ident">data_bytes</span>.<span class="ident">pop</span>().<span class="ident">unwrap</span>();
@@ -497,24 +505,25 @@
         <span class="kw">let</span> <span class="ident">checksum</span> <span class="op">=</span> <span class="ident">checksum</span>(<span class="ident">validated_region_bytes</span>);
 
         <span class="comment">// The read is failed if the checksum does not match.</span>
-        <span class="kw">if</span> <span class="ident">checksum</span> <span class="op">!=</span> <span class="ident">expected_checksum</span> {
+        <span class="kw">if</span> <span class="ident">checksum</span> <span class="op">!</span><span class="op">=</span> <span class="ident">expected_checksum</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">ChecksumMismatch</span>(<span class="ident">checksum</span>, <span class="ident">expected_checksum</span>));
         }
 
         <span class="comment">// Decode header values.</span>
-        <span class="kw">let</span> <span class="ident">length</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="ident">validated_region_bytes</span>[<span class="number">0</span>];
-        <span class="kw">let</span> <span class="ident">address</span>: <span class="ident">u16</span> <span class="op">=</span>
-            ((<span class="ident">validated_region_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>) <span class="op">|</span> ((<span class="ident">validated_region_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">record_type</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="ident">validated_region_bytes</span>[<span class="number">3</span>];
+        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">validated_region_bytes</span>[<span class="number">0</span>];
+        <span class="kw">let</span> <span class="ident">address_hi</span> <span class="op">=</span> (<span class="ident">validated_region_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+        <span class="kw">let</span> <span class="ident">address_lo</span> <span class="op">=</span> <span class="ident">validated_region_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u16</span>;
+        <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">address_hi</span> <span class="op">|</span> <span class="ident">address_lo</span>;
+        <span class="kw">let</span> <span class="ident">record_type</span> <span class="op">=</span> <span class="ident">validated_region_bytes</span>[<span class="number">3</span>];
         <span class="kw">let</span> <span class="ident">payload_bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">validated_region_bytes</span>[<span class="number">4</span>..];
 
         <span class="comment">// Validate the length of the record matches what was specified in the header.</span>
-        <span class="kw">if</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() <span class="op">!=</span> (<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>) {
+        <span class="kw">if</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> (<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">PayloadLengthMismatch</span>);
         }
 
         <span class="kw">match</span> <span class="ident">record_type</span> {
-            <span class="ident">types</span>::<span class="ident">DATA</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">DATA</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// A Data record consists of an address and payload bytes.</span>
                 <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">Data</span> {
                     <span class="ident">offset</span>: <span class="ident">address</span>,
@@ -522,88 +531,106 @@
                 })
             }
 
-            <span class="ident">types</span>::<span class="ident">END_OF_FILE</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">END_OF_FILE</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// An EoF record has no payload.</span>
                 <span class="kw">match</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() {
-                    <span class="ident">payload_sizes</span>::<span class="ident">END_OF_FILE</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">EndOfFile</span>),
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
+                    <span class="ident">payload_sizes</span>::<span class="ident">END_OF_FILE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">EndOfFile</span>),
+
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
                 }
             }
 
-            <span class="ident">types</span>::<span class="ident">EXTENDED_SEGMENT_ADDRESS</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">EXTENDED_SEGMENT_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">match</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() {
-                    <span class="ident">payload_sizes</span>::<span class="ident">EXTENDED_SEGMENT_ADDRESS</span> <span class="op">=&gt;</span> {
+                    <span class="ident">payload_sizes</span>::<span class="ident">EXTENDED_SEGMENT_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="comment">// The 16-bit extended segment address is encoded big-endian.</span>
-                        <span class="kw">let</span> <span class="ident">address_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>;
-                        <span class="kw">let</span> <span class="ident">address_lo</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>;
+                        <span class="kw">let</span> <span class="ident">address_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+                        <span class="kw">let</span> <span class="ident">address_lo</span> <span class="op">=</span> <span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>;
                         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">address_hi</span> <span class="op">|</span> <span class="ident">address_lo</span>;
 
                         <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">ExtendedSegmentAddress</span>(<span class="ident">address</span>))
                     }
 
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
                 }
             }
 
-            <span class="ident">types</span>::<span class="ident">START_SEGMENT_ADDRESS</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">START_SEGMENT_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">match</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() {
-                    <span class="ident">payload_sizes</span>::<span class="ident">START_SEGMENT_ADDRESS</span> <span class="op">=&gt;</span> {
+                    <span class="ident">payload_sizes</span>::<span class="ident">START_SEGMENT_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="comment">// The CS:IP pair is encoded as two 16-bit big-endian integers.</span>
-                        <span class="kw">let</span> <span class="ident">cs_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>;
-                        <span class="kw">let</span> <span class="ident">cs_lo</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>;
-                        <span class="kw">let</span> <span class="ident">ip_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>;
-                        <span class="kw">let</span> <span class="ident">ip_lo</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">3</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>;
+                        <span class="kw">let</span> <span class="ident">cs_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+                        <span class="kw">let</span> <span class="ident">cs_lo</span> <span class="op">=</span> <span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>;
+                        <span class="kw">let</span> <span class="ident">ip_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+                        <span class="kw">let</span> <span class="ident">ip_lo</span> <span class="op">=</span> <span class="ident">payload_bytes</span>[<span class="number">3</span>] <span class="kw">as</span> <span class="ident">u16</span>;
                         <span class="kw">let</span> <span class="ident">cs</span> <span class="op">=</span> <span class="ident">cs_hi</span> <span class="op">|</span> <span class="ident">cs_lo</span>;
                         <span class="kw">let</span> <span class="ident">ip</span> <span class="op">=</span> <span class="ident">ip_hi</span> <span class="op">|</span> <span class="ident">ip_lo</span>;
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">StartSegmentAddress</span> { <span class="ident">cs</span>: <span class="ident">cs</span>, <span class="ident">ip</span>: <span class="ident">ip</span> })
+                        <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">StartSegmentAddress</span> { <span class="ident">cs</span>, <span class="ident">ip</span> })
                     }
 
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
                 }
             }
 
-            <span class="ident">types</span>::<span class="ident">EXTENDED_LINEAR_ADDRESS</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">EXTENDED_LINEAR_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">match</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() {
-                    <span class="ident">payload_sizes</span>::<span class="ident">EXTENDED_LINEAR_ADDRESS</span> <span class="op">=&gt;</span> {
+                    <span class="ident">payload_sizes</span>::<span class="ident">EXTENDED_LINEAR_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="comment">// The upper 16 bits of the linear address are encoded as a 16-bit big-endian integer.</span>
-                        <span class="kw">let</span> <span class="ident">ela_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>;
-                        <span class="kw">let</span> <span class="ident">ela_lo</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>;
+                        <span class="kw">let</span> <span class="ident">ela_hi</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+                        <span class="kw">let</span> <span class="ident">ela_lo</span> <span class="op">=</span> <span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u16</span>;
                         <span class="kw">let</span> <span class="ident">ela</span> <span class="op">=</span> <span class="ident">ela_hi</span> <span class="op">|</span> <span class="ident">ela_lo</span>;
 
                         <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">ExtendedLinearAddress</span>(<span class="ident">ela</span>))
                     }
 
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
                 }
             }
 
-            <span class="ident">types</span>::<span class="ident">START_LINEAR_ADDRESS</span> <span class="op">=&gt;</span> {
+            <span class="ident">types</span>::<span class="ident">START_LINEAR_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">match</span> <span class="ident">payload_bytes</span>.<span class="ident">len</span>() {
-                    <span class="ident">payload_sizes</span>::<span class="ident">START_LINEAR_ADDRESS</span> <span class="op">=&gt;</span> {
+                    <span class="ident">payload_sizes</span>::<span class="ident">START_LINEAR_ADDRESS</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="comment">// The 32-bit value loaded into EIP is encoded as a 32-bit big-endian integer.</span>
-                        <span class="kw">let</span> <span class="ident">sla_4</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;&lt;</span> <span class="number">24</span>;
-                        <span class="kw">let</span> <span class="ident">sla_3</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;&lt;</span> <span class="number">16</span>;
-                        <span class="kw">let</span> <span class="ident">sla_2</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;&lt;</span> <span class="number">8</span>;
-                        <span class="kw">let</span> <span class="ident">sla_1</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">3</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;&lt;</span> <span class="number">0</span>;
+                        <span class="kw">let</span> <span class="ident">sla_4</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">0</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">24</span>;
+                        <span class="kw">let</span> <span class="ident">sla_3</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">1</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>;
+                        <span class="kw">let</span> <span class="ident">sla_2</span> <span class="op">=</span> (<span class="ident">payload_bytes</span>[<span class="number">2</span>] <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+                        <span class="kw">let</span> <span class="ident">sla_1</span> <span class="op">=</span> <span class="ident">payload_bytes</span>[<span class="number">3</span>] <span class="kw">as</span> <span class="ident">u32</span>;
                         <span class="kw">let</span> <span class="ident">sla</span> <span class="op">=</span> <span class="ident">sla_4</span> <span class="op">|</span> <span class="ident">sla_3</span> <span class="op">|</span> <span class="ident">sla_2</span> <span class="op">|</span> <span class="ident">sla_1</span>;
 
                         <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">StartLinearAddress</span>(<span class="ident">sla</span>))
                     }
 
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">InvalidLengthForType</span>),
                 }
             }
 
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">UnsupportedRecordType</span>(<span class="ident">record_type</span>)),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">ReaderError</span>::<span class="ident">UnsupportedRecordType</span>(<span class="ident">record_type</span>)),
         }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">str</span>::<span class="ident">FromStr</span> <span class="kw">for</span> <span class="ident">Record</span> {
     <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident">ReaderError</span>;
-    <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="self">Self</span>::<span class="prelude-val">Err</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="self">Self</span>::<span class="prelude-val">Err</span><span class="op">&gt;</span> {
         <span class="ident">Record</span>::<span class="ident">from_record_string</span>(<span class="ident">input</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ReaderOptions</span> {
+    <span class="doccomment">/// A flag indicating that iteration should stop on first failure.</span>
+    <span class="kw">pub</span> <span class="ident">stop_after_first_error</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// A flag indicating that iteration should stop on first EOF record encountered.</span>
+    <span class="kw">pub</span> <span class="ident">stop_after_eof</span>: <span class="ident">bool</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ReaderOptions</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">ReaderOptions</span> {
+            <span class="ident">stop_after_first_error</span>: <span class="bool-val">true</span>,
+            <span class="ident">stop_after_eof</span>: <span class="bool-val">true</span>,
+        }
     }
 }
 
@@ -612,10 +639,8 @@
     <span class="ident">line_iterator</span>: <span class="ident">str</span>::<span class="ident">Lines</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Reading may complete before the line iterator.</span>
     <span class="ident">finished</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// A flag indicating that iteration should stop on first failure.</span>
-    <span class="ident">stop_after_first_error</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// A flag indicating that iteration should stop on first EOF record encountered.</span>
-    <span class="ident">stop_after_eof</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Configuration options.</span>
+    <span class="ident">options</span>: <span class="ident">ReaderOptions</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Reader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -625,24 +650,19 @@
     <span class="doccomment">/// to `next()` return `None`. If `stop_after_eof` is `true` then the first EoF record</span>
     <span class="doccomment">/// will make all subsequent calls to `next()` return `None`.</span>
     <span class="doccomment">///</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_stopping_after_error_and_eof</span>(
-        <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
-        <span class="ident">stop_after_first_error</span>: <span class="ident">bool</span>,
-        <span class="ident">stop_after_eof</span>: <span class="ident">bool</span>,
-    ) <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_with_options</span>(<span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, <span class="ident">options</span>: <span class="ident">ReaderOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">Reader</span> {
             <span class="ident">line_iterator</span>: <span class="ident">string</span>.<span class="ident">lines</span>(),
             <span class="ident">finished</span>: <span class="bool-val">false</span>,
-            <span class="ident">stop_after_first_error</span>: <span class="ident">stop_after_first_error</span>,
-            <span class="ident">stop_after_eof</span>: <span class="ident">stop_after_eof</span>,
+            <span class="ident">options</span>,
         }
     }
 
     <span class="doccomment">///</span>
     <span class="doccomment">/// Creates a new IHEX reader over `string` with default configuration parameters.</span>
     <span class="doccomment">///</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
-        <span class="ident">Reader</span>::<span class="ident">new_stopping_after_error_and_eof</span>(<span class="ident">string</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">Reader</span>::<span class="ident">new_with_options</span>(<span class="ident">string</span>, <span class="ident">Default</span>::<span class="ident">default</span>())
     }
 
     <span class="doccomment">///</span>
@@ -650,18 +670,18 @@
     <span class="doccomment">/// Increments the offset by the number of bytes processed. Does not respect the &#39;finished&#39; flag.</span>
     <span class="doccomment">/// It will return either the next record string to be read, or None if nothing is left to process.</span>
     <span class="doccomment">///</span>
-    <span class="kw">fn</span> <span class="ident">next_record</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next_record</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">None</span>;
 
         <span class="comment">// Locate the first non-empty line.</span>
         <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">line</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">line_iterator</span>.<span class="ident">next</span>() {
-            <span class="kw">if</span> <span class="ident">line</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">line</span>.<span class="ident">is_empty</span>() {
                 <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">line</span>);
                 <span class="kw">break</span>;
             }
         }
 
-        <span class="kw">return</span> <span class="ident">result</span>;
+        <span class="ident">result</span>
     }
 }
 
@@ -672,30 +692,28 @@
     <span class="doccomment">/// Iterates over the lines of the IHEX object, skipping any empty ones,</span>
     <span class="doccomment">/// and returns the result of parsing that line.</span>
     <span class="doccomment">///</span>
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">finished</span> {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">next_record</span>() {
-            <span class="prelude-val">None</span> <span class="op">=&gt;</span> {
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="self">self</span>.<span class="ident">finished</span> <span class="op">=</span> <span class="bool-val">true</span>;
                 <span class="prelude-val">None</span>
             }
 
-            <span class="prelude-val">Some</span>(<span class="ident">line</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">line</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">parse_result</span> <span class="op">=</span> <span class="ident">str</span>::<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">Record</span><span class="op">&gt;</span>(<span class="ident">line</span>);
 
                 <span class="comment">// Check if iteration should end after a parse failure.</span>
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">parse_result</span> {
-                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">stop_after_first_error</span> {
-                        <span class="self">self</span>.<span class="ident">finished</span> <span class="op">=</span> <span class="bool-val">true</span>;
-                    }
+                <span class="kw">if</span> <span class="ident">parse_result</span>.<span class="ident">is_err</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="self">self</span>.<span class="ident">options</span>.<span class="ident">stop_after_first_error</span> {
+                    <span class="self">self</span>.<span class="ident">finished</span> <span class="op">=</span> <span class="bool-val">true</span>;
                 }
 
                 <span class="comment">// Check if iteration should end after an EOF.</span>
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">Record</span>::<span class="ident">EndOfFile</span>) <span class="op">=</span> <span class="ident">parse_result</span> {
-                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">stop_after_eof</span> {
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">options</span>.<span class="ident">stop_after_eof</span> {
                         <span class="self">self</span>.<span class="ident">finished</span> <span class="op">=</span> <span class="bool-val">true</span>;
                     }
                 }
@@ -707,5 +725,5 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">FusedIterator</span> <span class="kw">for</span> <span class="ident">Reader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {}
-</pre>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "ihex";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>
+</pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "ihex";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
