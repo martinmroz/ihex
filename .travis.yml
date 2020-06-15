@@ -34,15 +34,13 @@ script:
       cargo build &&
       cargo test &&
       cargo bench &&
-      cargo doc
+      cargo doc --verbose
 
 after_success:
   # Measure code coverage and upload to coveralls.io
   - cargo coveralls
-  # Generate documentation
-  - cargo doc --verbose
   # Upload documentation to github.io (gh-pages branch)
-  - cargo doc-upload
+  - cargo doc-upload --path "$TRAVIS_BRANCH"
 
 # Do not notify
 notifications:
@@ -53,4 +51,4 @@ notifications:
 env:
   global:
     # Encrypted GitHub token for documentation
-    - secure: TAg1dViuXOmwjx6lblBBGHIBRTsr16Y4w6wdSkuSL0PMXUTjblpgt8iv/m5RdgWIgsRuIWfkKdOTCcc9jHxA3u0qeq+1Ip9zWDJ0d3J1fDEOv4/982onf+TghYCZJzHuYGnT16nnLJ8U+wonbKjdvtqLHKCjNMcm/dTWaBtP1cNKvEPVHy9sKhSvC/2UblT963SMqKMQNwHtzb4ToPh/UjMMwcHtref/9j33lTUBmJkv8b6y5uu9BALiZZoil8v9nfeMwprhZRv5UVbaq8uU5W25BRQdKW++tRiRQGRpDZhLE5iBf9Juo8ZVg1dV14PRL1ps4hkEKqbBGsXrYAbaIEJD/VAV2Z+entUbWTEhF2llVDCnNZdGlir4IXk+8U9E1SKFQqZ4ZCDABy/DaWbJmD/IKTkJT+6lwYQVdYnv5z39UmK6DX9iDuAfiZ7ApCHCQpPxGQsQxTKpZoiOSwXcb31qfJrvVb5xoLYgkduxIAAa4+CofTXMtYuk7R66nkMP/a8L0xmkqZAYvT5ywvpPW7RF4+S6NeUayZUFDA0lOWwszD+1UmRk4iDrRNgfjRccTuoQWntc85PrcmRrL20pQZPjltANuqfTiDjsxXhMBWmfB9O64ZLfiiqdcB5LFZ1dTDtJQ007i+f3+dZ8Ecyp4LJAlBWeaHUVVQtnMVNXi2E=
+    - secure: DT1ng1fpr4aVrA/+qASPQ2qB3lg4d+HcDmrlozkr+zmu4OjEOBgK7+3zb3IYiR9Le7z5Zs0YxqxJIRfhIXhcAMF9C8uX1qJ0h3oCVG7qfP6HRvWLmTd+OVS1zAzZXrN6AXg0Qu3m3FEgVOMsancH2n3a55XKK+PE4lGcEGugO/js/rVg7QMAAamzLPUW+PfqJz5yzHFjpcKkcocF/5+N8Yz+28XzH4We8Uep9GHL+RdyKsZg8p4AVSre/X9g43aqB9O4ZYGYii2n3PJpTfZ2PDOI1LZvY647c70s3VxBv+ZeX5PS1qCdHtXdUhHAGv8LuSC82/NduS36fyDvFHsJtZg9fEGwFdsNQQeAJwmHHrbEbFzHL5oY9VgmjDBE7EU7gw36DSOeJq7HzKL206CYFjuZDQkBQjQP7O1biH8kxNU41GdiJYD79mrjnTw1lADRqISMOgehEjGE3mm8M6Ya3N18SOs+c1smkJGUK89Sjs/SNo9xdf6fEQmYPBs2HlneiVL+ikWa+Mp7PHRClKOb2gkh0nmylEOGs9cpqMj4cNVGgKUi7+eqpJHa1GDYkVCdoG1VM0K8hv7EwZkkmVa660t7FIn+jE1K+YO26s/xqkZ5ei7AhEiA6ZessxLOCLJ7I/scSVG3OG1BEztj7K9G2jujqpQOSQUeYpfK29QCdUA=
