@@ -17,10 +17,10 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ihex = "1.1"
+ihex = "2.0"
 ```
 
-In addition, and this to your crate root:
+In addition, for Rust 2015 edition projects, and this to your crate root:
 
 ```rust
 extern crate ihex;
@@ -30,10 +30,7 @@ Here is an example which builds an IHEX object file with test data and prints it
 
 
 ```rust
-extern crate ihex;
-
-use ihex::record::Record;
-use ihex::writer;
+use ihex::Record;
 
 fn main() {
     let records = &[
@@ -41,7 +38,7 @@ fn main() {
         Record::EndOfFile
     ];
 
-    if let Ok(object) = writer::create_object_file_representation(records) {
+    if let Ok(object) = ihex::create_object_file_representation(records) {
         println!("{}", object);
     }
 }
