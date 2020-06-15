@@ -8,7 +8,7 @@
 //
 
 ///
-/// Computes the Intel HEX checksum of `data`. This is done by summing all the bytes `data
+/// Computes the Intel HEX checksum of `data`. This is done by summing all the bytes of `data`
 /// and taking the two's complement of the least significant byte of the sum.
 ///
 pub fn checksum<T>(data: T) -> u8

@@ -51,7 +51,7 @@ impl Record {
     ///
     /// Returns the IHEX record representation of the receiver, or an error on failure.
     ///
-    pub fn to_hex_string(&self) -> Result<String, WriterError> {
+    pub fn to_record_string(&self) -> Result<String, WriterError> {
         match self {
             Record::Data { offset, value } => format_record(self.record_type(), *offset, value),
 
@@ -188,7 +188,7 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
     }
 
     records.iter().try_fold(String::new(), |mut acc, record| {
-        acc.push_str(&record.to_hex_string()?);
+        acc.push_str(&record.to_record_string()?);
         acc.push_str("\n");
         Ok(acc)
     })

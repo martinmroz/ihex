@@ -17,7 +17,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ihex = "2.0"
+ihex = "3.0"
 ```
 
 In addition, for Rust 2015 edition projects, and this to your crate root:
