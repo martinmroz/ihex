@@ -7,10 +7,7 @@
 // distributed except according to those terms.
 //
 
-extern crate ihex;
-
-use ihex::reader::*;
-use ihex::record::Record;
+use ihex::*;
 
 #[test]
 fn test_record_from_record_string_rejects_missing_start_code() {
@@ -225,9 +222,7 @@ fn test_record_from_record_string_parses_valid_data_records() {
         Record::from_record_string(":0B0010006164647265737320676170A7"),
         Ok(Record::Data {
             offset: 0x0010,
-            value: vec![
-                0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x20, 0x67, 0x61, 0x70,
-            ],
+            value: vec![0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x20, 0x67, 0x61, 0x70,],
         })
     );
 
@@ -354,7 +349,13 @@ fn test_reader_respects_stop_after_first_error_false() {
         ip: 0x3800,
     };
 
-    let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, false);
+    let mut reader = Reader::new_with_options(
+        &input,
+        ReaderOptions {
+            stop_after_first_error: false,
+            stop_after_eof: false,
+        },
+    );
     assert_eq!(reader.next(), Some(Ok(data_rec)));
     assert_eq!(reader.next(), Some(Err(ReaderError::RecordTooShort)));
     assert_eq!(reader.next(), Some(Ok(ssa_rec)));
@@ -373,7 +374,13 @@ fn test_reader_respects_stop_after_first_error_true() {
         ],
     };
 
-    let mut reader = Reader::new_stopping_after_error_and_eof(&input, true, false);
+    let mut reader = Reader::new_with_options(
+        &input,
+        ReaderOptions {
+            stop_after_first_error: true,
+            stop_after_eof: false,
+        },
+    );
     assert_eq!(reader.next(), Some(Ok(data_rec)));
     assert_eq!(reader.next(), Some(Err(ReaderError::RecordTooShort)));
     assert_eq!(reader.next(), None);
@@ -398,7 +405,13 @@ fn test_reader_respects_stop_after_first_eof_false() {
     };
     let eof_rec = Record::EndOfFile;
 
-    let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, false);
+    let mut reader = Reader::new_with_options(
+        &input,
+        ReaderOptions {
+            stop_after_first_error: false,
+            stop_after_eof: false,
+        },
+    );
     assert_eq!(reader.next(), Some(Ok(data_rec)));
     assert_eq!(reader.next(), Some(Ok(eof_rec)));
     assert_eq!(reader.next(), Some(Ok(ssa_rec)));
@@ -420,7 +433,13 @@ fn test_reader_respects_stop_after_first_eof_true() {
     };
     let eof_rec = Record::EndOfFile;
 
-    let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, true);
+    let mut reader = Reader::new_with_options(
+        &input,
+        ReaderOptions {
+            stop_after_first_error: false,
+            stop_after_eof: true,
+        },
+    );
     assert_eq!(reader.next(), Some(Ok(data_rec)));
     assert_eq!(reader.next(), Some(Ok(eof_rec)));
     assert_eq!(reader.next(), None);
@@ -506,7 +525,13 @@ fn test_reader_respects_ignores_extra_newlines() {
     };
     let eof_rec = Record::EndOfFile;
 
-    let mut reader = Reader::new_stopping_after_error_and_eof(&input, false, true);
+    let mut reader = Reader::new_with_options(
+        &input,
+        ReaderOptions {
+            stop_after_first_error: false,
+            stop_after_eof: true,
+        },
+    );
     assert_eq!(reader.next(), Some(Ok(data_rec)));
     assert_eq!(reader.next(), Some(Ok(eof_rec)));
     assert_eq!(reader.next(), None);

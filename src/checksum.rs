@@ -7,20 +7,23 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-/**
- Computes the Intel HEX checksum of `data`. This is done by summing all the bytes `data
- and taking the two's complement of the least significant byte of the sum.
- */
-pub fn checksum(data: &[u8]) -> u8 {
+///
+/// Computes the Intel HEX checksum of `data`. This is done by summing all the bytes `data
+/// and taking the two's complement of the least significant byte of the sum.
+///
+pub fn checksum<T>(data: T) -> u8
+where
+    T: AsRef<[u8]>,
+{
     (0 as u8).wrapping_sub(
-        data.iter()
-        .fold(0, |acc, &value| acc.wrapping_add(value as u8)
-    ))
+        data.as_ref()
+            .iter()
+            .fold(0, |acc, &value| acc.wrapping_add(value as u8)),
+    )
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
@@ -45,5 +48,4 @@ mod tests {
             0x2A
         );
     }
-
 }
