@@ -108,7 +108,7 @@ impl Record {
         }
 
         let data_portion = &string[1..];
-        let data_poriton_length = data_portion.chars().count();
+        let data_portion_length = data_portion.chars().count();
 
         // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
         if !data_portion
@@ -119,11 +119,11 @@ impl Record {
         }
 
         // Basic sanity-checking the input record string.
-        if data_poriton_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
+        if data_portion_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
             return Err(ReaderError::RecordTooShort);
-        } else if data_poriton_length > char_counts::LARGEST_RECORD_EXCLUDING_START_CODE {
+        } else if data_portion_length > char_counts::LARGEST_RECORD_EXCLUDING_START_CODE {
             return Err(ReaderError::RecordTooLong);
-        } else if (data_poriton_length % 2) != 0 {
+        } else if (data_portion_length % 2) != 0 {
             return Err(ReaderError::RecordNotEvenLength);
         }
 
