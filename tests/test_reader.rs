@@ -10,6 +10,12 @@
 use ihex::*;
 
 #[test]
+fn test_record_from_record_string_ignore_preceding_start_code() -> Result<(), ihex::ReaderError> {
+    Record::from_record_string("wponadwoiand w03421 :00000001FF")?;
+    Ok(())
+}
+
+#[test]
 fn test_record_from_record_string_rejects_missing_start_code() {
     assert_eq!(
         Record::from_record_string("00000001FF"),
