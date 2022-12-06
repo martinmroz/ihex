@@ -102,10 +102,7 @@ impl Record {
     /// ```
     ///
     pub fn from_record_string(string: &str) -> Result<Self, ReaderError> {
-        let clean_string = string
-            .replace(" ", "")
-            .trim_start_matches(|c| c != ':')
-            .to_string();
+        let clean_string = string.trim_start_matches(|c| c != ':').to_string();
         if let Some(':') = clean_string.chars().next() {
         } else {
             return Err(ReaderError::MissingStartCode);
