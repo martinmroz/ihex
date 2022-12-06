@@ -102,12 +102,13 @@ impl Record {
     /// ```
     ///
     pub fn from_record_string(string: &str) -> Result<Self, ReaderError> {
-        if let Some(':') = string.chars().next() {
+        let clean_string = string.trim_start_matches(|c| c != ':').to_string();
+        if let Some(':') = clean_string.chars().next() {
         } else {
             return Err(ReaderError::MissingStartCode);
         }
 
-        let data_portion = &string[1..];
+        let data_portion = &clean_string[1..];
         let data_portion_length = data_portion.chars().count();
 
         // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
