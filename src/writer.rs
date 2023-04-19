@@ -54,12 +54,12 @@ impl Record {
         match self {
             Record::Data { offset, value } => format_record(self.record_type(), *offset, value),
 
-            Record::EndOfFile => format_record(self.record_type(), 0x0000, &[]),
+            Record::EndOfFile => format_record(self.record_type(), 0x0000, []),
 
             Record::ExtendedSegmentAddress(segment_address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((segment_address & 0xFF00) >> 8) as u8,
                     (segment_address & 0x00FF) as u8,
                 ],
@@ -68,7 +68,7 @@ impl Record {
             Record::StartSegmentAddress { cs, ip } => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((cs & 0xFF00) >> 8) as u8,
                     (cs & 0x00FF) as u8,
                     ((ip & 0xFF00) >> 8) as u8,
@@ -79,7 +79,7 @@ impl Record {
             Record::ExtendedLinearAddress(linear_address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((linear_address & 0xFF00) >> 8) as u8,
                     (linear_address & 0x00FF) as u8,
                 ],
@@ -88,7 +88,7 @@ impl Record {
             Record::StartLinearAddress(address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((address & 0xFF00_0000) >> 24) as u8,
                     ((address & 0x00FF_0000) >> 16) as u8,
                     ((address & 0x0000_FF00) >> 8) as u8,
@@ -187,7 +187,7 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
 
     records.iter().try_fold(String::new(), |mut acc, record| {
         acc.push_str(&record.to_record_string()?);
-        acc.push_str("\n");
+        acc.push('\n');
         Ok(acc)
     })
 }
