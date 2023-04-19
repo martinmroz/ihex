@@ -12,4 +12,9 @@ keywords = ["ihex", "intel", "hex"]
 license = "MIT OR Apache-2.0"
 edition = "2018"
 
-[dependencies]
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark_reader"
+harness = false
