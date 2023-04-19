@@ -21,3 +21,7 @@ criterion = "0.3"
 [[bench]]
 name = "benchmark_reader"
 harness = false
+
+[[bench]]
+name = "benchmark_writer"
+harness = false
