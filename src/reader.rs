@@ -297,7 +297,7 @@ impl<'a> Reader<'a> {
         let mut result = None;
 
         // Locate the first non-empty line.
-        while let Some(line) = self.line_iterator.next() {
+        for line in self.line_iterator.by_ref() {
             if !line.is_empty() {
                 result = Some(line);
                 break;
