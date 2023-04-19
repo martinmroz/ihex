@@ -9,7 +9,6 @@
 
 use std::error::Error;
 use std::fmt;
-use std::fmt::Write;
 
 use crate::checksum::checksum;
 use crate::record::Record;
@@ -55,12 +54,12 @@ impl Record {
         match self {
             Record::Data { offset, value } => format_record(self.record_type(), *offset, value),
 
-            Record::EndOfFile => format_record(self.record_type(), 0x0000, &[]),
+            Record::EndOfFile => format_record(self.record_type(), 0x0000, []),
 
             Record::ExtendedSegmentAddress(segment_address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((segment_address & 0xFF00) >> 8) as u8,
                     (segment_address & 0x00FF) as u8,
                 ],
@@ -69,7 +68,7 @@ impl Record {
             Record::StartSegmentAddress { cs, ip } => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((cs & 0xFF00) >> 8) as u8,
                     (cs & 0x00FF) as u8,
                     ((ip & 0xFF00) >> 8) as u8,
@@ -80,7 +79,7 @@ impl Record {
             Record::ExtendedLinearAddress(linear_address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((linear_address & 0xFF00) >> 8) as u8,
                     (linear_address & 0x00FF) as u8,
                 ],
@@ -89,7 +88,7 @@ impl Record {
             Record::StartLinearAddress(address) => format_record(
                 self.record_type(),
                 0x0000,
-                &[
+                [
                     ((address & 0xFF00_0000) >> 24) as u8,
                     ((address & 0x00FF_0000) >> 16) as u8,
                     ((address & 0x0000_FF00) >> 8) as u8,
@@ -131,7 +130,7 @@ where
     data_region.extend_from_slice(data);
 
     // Compute the checksum of the data region thus far and append it.
-    let checksum = checksum(data_region.as_slice());
+    let checksum = checksum(&data_region);
     data_region.push(checksum);
 
     // The result string is twice as long as the record plus the start code.
@@ -140,11 +139,10 @@ where
 
     // Construct the record.
     result.push(':');
-    data_region.iter().try_fold(result, |mut acc, byte| {
-        write!(&mut acc, "{:02X}", byte)
-            .map_err(|_| WriterError::SynthesisFailed)
-            .map(|_| acc)
-    })
+
+    hex_simd::encode_append(data_region, &mut result, hex_simd::AsciiCase::Upper);
+
+    Ok(result)
 }
 
 ///
@@ -189,7 +187,7 @@ pub fn create_object_file_representation(records: &[Record]) -> Result<String, W
 
     records.iter().try_fold(String::new(), |mut acc, record| {
         acc.push_str(&record.to_record_string()?);
-        acc.push_str("\n");
+        acc.push('\n');
         Ok(acc)
     })
 }

@@ -108,15 +108,7 @@ impl Record {
         }
 
         let data_portion = &string[1..];
-        let data_portion_length = data_portion.chars().count();
-
-        // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
-        if !data_portion
-            .chars()
-            .all(|character| character.is_ascii_hexdigit())
-        {
-            return Err(ReaderError::ContainsInvalidCharacters);
-        }
+        let data_portion_length = data_portion.len();
 
         // Basic sanity-checking the input record string.
         if data_portion_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
@@ -128,17 +120,12 @@ impl Record {
         }
 
         // Convert the character stream to bytes.
-        let mut data_bytes = data_portion
-            .as_bytes()
-            .chunks(2)
-            .map(|chunk| str::from_utf8(chunk).unwrap())
-            .map(|byte_str| u8::from_str_radix(byte_str, 16).unwrap())
-            .collect::<Vec<u8>>();
+        let mut data_bytes = hex_simd::decode_to_vec(data_portion.as_bytes())
+            .map_err(|_| ReaderError::ContainsInvalidCharacters)?;
 
         // Compute the checksum.
         let expected_checksum = data_bytes.pop().unwrap();
-        let validated_region_bytes = data_bytes.as_slice();
-        let checksum = checksum(validated_region_bytes);
+        let checksum = checksum(&data_bytes);
 
         // The read is failed if the checksum does not match.
         if checksum != expected_checksum {
@@ -146,12 +133,12 @@ impl Record {
         }
 
         // Decode header values.
-        let length = validated_region_bytes[0];
-        let address_hi = (validated_region_bytes[1] as u16) << 8;
-        let address_lo = validated_region_bytes[2] as u16;
+        let length = data_bytes[0];
+        let address_hi = (data_bytes[1] as u16) << 8;
+        let address_lo = data_bytes[2] as u16;
         let address = address_hi | address_lo;
-        let record_type = validated_region_bytes[3];
-        let payload_bytes = &validated_region_bytes[4..];
+        let record_type = data_bytes[3];
+        let payload_bytes = data_bytes.split_off(4);
 
         // Validate the length of the record matches what was specified in the header.
         if payload_bytes.len() != (length as usize) {
@@ -163,7 +150,7 @@ impl Record {
                 // A Data record consists of an address and payload bytes.
                 Ok(Record::Data {
                     offset: address,
-                    value: Vec::from(payload_bytes),
+                    value: payload_bytes,
                 })
             }
 
@@ -310,7 +297,7 @@ impl<'a> Reader<'a> {
         let mut result = None;
 
         // Locate the first non-empty line.
-        while let Some(line) = self.line_iterator.next() {
+        for line in self.line_iterator.by_ref() {
             if !line.is_empty() {
                 result = Some(line);
                 break;

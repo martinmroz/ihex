@@ -15,10 +15,10 @@ pub fn checksum<T>(data: T) -> u8
 where
     T: AsRef<[u8]>,
 {
-    (0 as u8).wrapping_sub(
+    0u8.wrapping_sub(
         data.as_ref()
             .iter()
-            .fold(0, |acc, &value| acc.wrapping_add(value as u8)),
+            .fold(0, |acc, &value| acc.wrapping_add(value)),
     )
 }
 
