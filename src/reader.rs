@@ -125,8 +125,7 @@ impl Record {
 
         // Compute the checksum.
         let expected_checksum = data_bytes.pop().unwrap();
-        let validated_region_bytes = data_bytes.as_slice();
-        let checksum = checksum(validated_region_bytes);
+        let checksum = checksum(&data_bytes);
 
         // The read is failed if the checksum does not match.
         if checksum != expected_checksum {
@@ -134,12 +133,12 @@ impl Record {
         }
 
         // Decode header values.
-        let length = validated_region_bytes[0];
-        let address_hi = (validated_region_bytes[1] as u16) << 8;
-        let address_lo = validated_region_bytes[2] as u16;
+        let length = data_bytes[0];
+        let address_hi = (data_bytes[1] as u16) << 8;
+        let address_lo = data_bytes[2] as u16;
         let address = address_hi | address_lo;
-        let record_type = validated_region_bytes[3];
-        let payload_bytes = &validated_region_bytes[4..];
+        let record_type = data_bytes[3];
+        let payload_bytes = data_bytes.split_off(4);
 
         // Validate the length of the record matches what was specified in the header.
         if payload_bytes.len() != (length as usize) {
@@ -151,7 +150,7 @@ impl Record {
                 // A Data record consists of an address and payload bytes.
                 Ok(Record::Data {
                     offset: address,
-                    value: Vec::from(payload_bytes),
+                    value: payload_bytes,
                 })
             }
 
