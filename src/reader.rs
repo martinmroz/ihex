@@ -108,7 +108,7 @@ impl Record {
         }
 
         let data_portion = &string[1..];
-        let data_portion_length = data_portion.chars().count();
+        let data_portion_length = data_portion.len();
 
         // Basic sanity-checking the input record string.
         if data_portion_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
