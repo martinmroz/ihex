@@ -110,14 +110,6 @@ impl Record {
         let data_portion = &string[1..];
         let data_portion_length = data_portion.chars().count();
 
-        // Validate all characters are hexadecimal before checking the digit counts for more accurate errors.
-        if !data_portion
-            .chars()
-            .all(|character| character.is_ascii_hexdigit())
-        {
-            return Err(ReaderError::ContainsInvalidCharacters);
-        }
-
         // Basic sanity-checking the input record string.
         if data_portion_length < char_counts::SMALLEST_RECORD_EXCLUDING_START_CODE {
             return Err(ReaderError::RecordTooShort);
@@ -128,12 +120,8 @@ impl Record {
         }
 
         // Convert the character stream to bytes.
-        let mut data_bytes = data_portion
-            .as_bytes()
-            .chunks(2)
-            .map(|chunk| str::from_utf8(chunk).unwrap())
-            .map(|byte_str| u8::from_str_radix(byte_str, 16).unwrap())
-            .collect::<Vec<u8>>();
+        let mut data_bytes = hex_simd::decode_to_vec(data_portion.as_bytes())
+            .map_err(|_| ReaderError::ContainsInvalidCharacters)?;
 
         // Compute the checksum.
         let expected_checksum = data_bytes.pop().unwrap();

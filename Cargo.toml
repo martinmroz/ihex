@@ -12,6 +12,9 @@ keywords = ["ihex", "intel", "hex"]
 license = "MIT OR Apache-2.0"
 edition = "2018"
 
+[dependencies]
+hex-simd = "0.8"
+
 [dev-dependencies]
 criterion = "0.3"
 
