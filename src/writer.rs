@@ -9,7 +9,6 @@
 
 use std::error::Error;
 use std::fmt;
-use std::fmt::Write;
 
 use crate::checksum::checksum;
 use crate::record::Record;
@@ -131,7 +130,7 @@ where
     data_region.extend_from_slice(data);
 
     // Compute the checksum of the data region thus far and append it.
-    let checksum = checksum(data_region.as_slice());
+    let checksum = checksum(&data_region);
     data_region.push(checksum);
 
     // The result string is twice as long as the record plus the start code.
@@ -140,11 +139,10 @@ where
 
     // Construct the record.
     result.push(':');
-    data_region.iter().try_fold(result, |mut acc, byte| {
-        write!(&mut acc, "{:02X}", byte)
-            .map_err(|_| WriterError::SynthesisFailed)
-            .map(|_| acc)
-    })
+
+    hex_simd::encode_append(data_region, &mut result, hex_simd::AsciiCase::Upper);
+
+    Ok(result)
 }
 
 ///
