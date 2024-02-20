@@ -1,0 +1,24 @@
+[package]
+name = "ihex-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.ihex]
+path = ".."
+
+[[bin]]
+name = "ihex"
+path = "fuzz_targets/ihex.rs"
+test = false
+doc = false
+bench = false
+
+[profile.release]
+debug = 1
