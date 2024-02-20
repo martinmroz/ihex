@@ -141,6 +141,7 @@ impl Record {
         let checksum = checksum(validated_region_bytes);
 
         // The read is failed if the checksum does not match.
+        #[cfg(not(fuzzing))]
         if checksum != expected_checksum {
             return Err(ReaderError::ChecksumMismatch(checksum, expected_checksum));
         }
